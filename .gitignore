@@ -1,0 +1,7 @@
+build
+.vscode
+.idea
+.ccls-cache
+.clang-format
+.replit
+replit.nix
