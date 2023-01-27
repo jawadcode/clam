@@ -8,7 +8,7 @@ typedef enum {
     RESULT_ERR,
 } ResultTag;
 
-#define CreateResult(T, E, name)                                               \
+#define DEF_RESULT(T, E, name)                                                 \
     typedef struct {                                                           \
         ResultTag tag;                                                         \
         union name##Union {                                                    \
@@ -17,14 +17,14 @@ typedef enum {
         } value;                                                               \
     } name##Result
 
-#define RetErr(ResultType, result, ReturnType)                                 \
+#define RET_ERR(ResultType, result, ReturnType)                                \
     do {                                                                       \
         ResultType r = result;                                                 \
         if (r.tag == RESULT_ERR)                                               \
             return (ReturnType){RESULT_ERR, {.err = r.value.err}};             \
     } while (0)
 
-#define RetErrAssign(ident, result, ResultType, ReturnType)                    \
+#define RET_ERR_ASSIGN(ident, result, ResultType, ReturnType)                  \
     do {                                                                       \
         ResultType r = result;                                                 \
         if (r.tag == RESULT_ERR)                                               \
@@ -33,7 +33,7 @@ typedef enum {
             ident = r.value.ok;                                                \
     } while (0)
 
-#define RetOk(ResultType, result, ReturnType)                                  \
+#define RET_OK(ResultType, result, ReturnType)                                 \
     do {                                                                       \
         ResultType r = result;                                                 \
         if (r.tag == RESULT_ERR)                                               \

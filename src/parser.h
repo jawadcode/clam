@@ -21,7 +21,7 @@ typedef struct {
     Span span;
 } SpannedIndex;
 
-CreateResult(SpannedIndex, SyntaxError, Parse);
+DEF_RESULT(SpannedIndex, SyntaxError, Parse);
 
 // Parse the source as an expression, pushing the AST nodes to 'self.ast_arena'
 ParseResult parse_expr(Parser *self);

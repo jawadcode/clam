@@ -40,7 +40,7 @@ static double parse_number(Parser *self, Span span) {
     return value / power;
 }
 
-CreateResult(char *, SyntaxError, ParseString);
+DEF_RESULT(char *, SyntaxError, ParseString);
 
 static ParseStringResult parse_string(Parser *self, Span span) {
     const char *str = self->lexer.source + span.start;
@@ -109,7 +109,7 @@ static ParseStringResult parse_string(Parser *self, Span span) {
     };
 }
 
-CreateResult(AST, SyntaxError, AST);
+DEF_RESULT(AST, SyntaxError, AST);
 
 #ifdef _MSC_VER
 #define UNREACHABLE                                                            \
@@ -145,8 +145,8 @@ static ASTResult parse_literal(Parser *self) {
         break;
     case TK_STRING: {
         char *string;
-        RetErrAssign(string, parse_string(self, current.span),
-                     ParseStringResult, ASTResult);
+        RET_ERR_ASSIGN(string, parse_string(self, current.span),
+                       ParseStringResult, ASTResult);
 
         lit = (AST_Literal){
             .tag = LITERAL_STRING,
@@ -193,7 +193,7 @@ const TokenKind TK_EXPR[TK_EXPR_LENGTH] = {TK_UNIT,   TK_TRUE,   TK_FALSE,
                                            TK_NUMBER, TK_STRING, TK_IDENT,
                                            TK_LPAREN, TK_FUN};
 
-CreateResult(Token, SyntaxError, Token);
+DEF_RESULT(Token, SyntaxError, Token);
 
 static TokenResult expect(Parser *self, TokenKind kind) {
     Token token = next_token(&self->lexer);
@@ -241,7 +241,7 @@ static ASTResult parse_abstraction(Parser *self) {
 
     // Mandatory first argument
     Token first_arg;
-    RetErrAssign(first_arg, expect(self, TK_IDENT), TokenResult, ASTResult);
+    RET_ERR_ASSIGN(first_arg, expect(self, TK_IDENT), TokenResult, ASTResult);
     String first_arg_string = (String){
         .buffer = self->lexer.source + first_arg.span.start,
         .length = first_arg.span.end - first_arg.span.start,
@@ -257,10 +257,10 @@ static ASTResult parse_abstraction(Parser *self) {
         StringVec_push(&args, arg_string);
     }
 
-    RetErr(TokenResult, expect(self, TK_ARROW), ASTResult);
+    RET_ERR(TokenResult, expect(self, TK_ARROW), ASTResult);
 
     SpannedIndex body;
-    RetErrAssign(body, parse_expr(self), ParseResult, ASTResult);
+    RET_ERR_ASSIGN(body, parse_expr(self), ParseResult, ASTResult);
 
     AST abs = (AST){.tag = AST_ABSTRACTION,
                     .value =
@@ -312,7 +312,7 @@ ParseResult parse_expr(Parser *self) {
     case TK_NUMBER:
     case TK_STRING: {
         AST lhs_ast;
-        RetErrAssign(lhs_ast, parse_literal(self), ASTResult, ParseResult);
+        RET_ERR_ASSIGN(lhs_ast, parse_literal(self), ASTResult, ParseResult);
         lhs = (SpannedIndex){ASTVec_push(&self->ast_arena, lhs_ast),
                              lhs_ast.span};
         break;
@@ -326,12 +326,13 @@ ParseResult parse_expr(Parser *self) {
     case TK_LPAREN:
         // Skip '('
         next_token(&self->lexer);
-        RetErrAssign(lhs, parse_expr(self), ParseResult, ParseResult);
-        RetErr(TokenResult, expect(self, TK_RPAREN), ParseResult);
+        RET_ERR_ASSIGN(lhs, parse_expr(self), ParseResult, ParseResult);
+        RET_ERR(TokenResult, expect(self, TK_RPAREN), ParseResult);
         break;
     case TK_FUN: {
         AST lhs_ast;
-        RetErrAssign(lhs_ast, parse_abstraction(self), ASTResult, ParseResult);
+        RET_ERR_ASSIGN(lhs_ast, parse_abstraction(self), ASTResult,
+                       ParseResult);
         lhs = (SpannedIndex){ASTVec_push(&self->ast_arena, lhs_ast),
                              lhs_ast.span};
         break;
@@ -359,7 +360,7 @@ ParseResult parse_expr(Parser *self) {
 
     while (at_any(self, TK_EXPR, TK_EXPR_LENGTH)) {
         SpannedIndex argument;
-        RetErrAssign(argument, parse_expr(self), ParseResult, ParseResult);
+        RET_ERR_ASSIGN(argument, parse_expr(self), ParseResult, ParseResult);
 
         AST lhs_ast = (AST){.tag = AST_APPLICATION,
                             .value =
@@ -434,7 +435,7 @@ ParseResult parse_expr(Parser *self) {
         next_token(&self->lexer);
 
         SpannedIndex rhs;
-        RetErrAssign(rhs, parse_expr(self), ParseResult, ParseResult);
+        RET_ERR_ASSIGN(rhs, parse_expr(self), ParseResult, ParseResult);
 
         Span span = {lhs.span.start, rhs.span.end};
         AST lhs_ast = (AST){
