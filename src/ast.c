@@ -33,3 +33,5 @@ String binop_to_string(AST_BinOp op) {
         return (String){"!=", 2};
     }
 }
+
+DEF_VEC(AST, ASTVec)

@@ -35,7 +35,7 @@ typedef struct {
 } AST_LetBind;
 
 // clang-format off
-VecHeader(AST_LetBind)
+DECL_VEC_HEADER(AST_LetBind, AST_LetBindVec)
 
 // An expression which is equivalent to 'body', given the variables defined
 // in 'bindings'
@@ -164,7 +164,7 @@ typedef struct {
 } SyntaxError;
 
 // clang-format off
-VecHeader(AST)
+DECL_VEC_HEADER(AST, ASTVec)
 
 String binop_to_string(AST_BinOp op);
 

@@ -83,8 +83,8 @@ typedef struct {
     MaybeToken peeked;
 } Lexer;
 
-VecHeader(Token)
-    // clang-format off
+DECL_VEC_HEADER(Token, TokenVec)
+// clang-format off
 
 // Create a new lexer that operates on `source`
 Lexer new_lexer(const char *source);

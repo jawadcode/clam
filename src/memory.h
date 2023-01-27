@@ -12,8 +12,6 @@
 #define GROW_ARRAY(type, pointer, new_count)                                   \
     (type *)reallocate(pointer, sizeof(type) * (new_count))
 
-#define FREE_ARRAY(type, pointer) (type *)reallocate(pointer, 0)
-
 void *reallocate(void *pointer, size_t new_size);
 
 #endif

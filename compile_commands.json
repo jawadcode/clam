@@ -1,0 +1,122 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/ast.c.o",
+      "src/ast.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/ast.c",
+    "output": "/home/jawad/langdev/clam/build/src/ast.c.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/parser.c.o",
+      "src/parser.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/parser.c",
+    "output": "/home/jawad/langdev/clam/build/src/parser.c.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/memory.c.o",
+      "src/memory.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/memory.c",
+    "output": "/home/jawad/langdev/clam/build/src/memory.c.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/lexer.c.o",
+      "src/lexer.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/lexer.c",
+    "output": "/home/jawad/langdev/clam/build/src/lexer.c.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/common.c.o",
+      "src/common.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/common.c",
+    "output": "/home/jawad/langdev/clam/build/src/common.c.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/clang",
+      "-I./src",
+      "-Wall",
+      "-Wextra",
+      "-pedantic",
+      "-O0",
+      "-g",
+      "-fsanitize=address",
+      "-fno-omit-frame-pointer",
+      "-c",
+      "-o",
+      "build/./src/main.c.o",
+      "src/main.c"
+    ],
+    "directory": "/home/jawad/langdev/clam",
+    "file": "/home/jawad/langdev/clam/src/main.c",
+    "output": "/home/jawad/langdev/clam/build/src/main.c.o"
+  }
+]

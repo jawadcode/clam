@@ -4,29 +4,31 @@
 #include "common.h"
 #include "memory.h"
 
-#define create_vec(T)                                                          \
-    typedef struct T##Vec {                                                    \
+#define CREATE_VEC(T, Name)                                                    \
+    typedef struct {                                                           \
         T *buffer;                                                             \
         size_t capacity;                                                       \
         size_t length;                                                         \
-    } T##Vec;
+    } Name;
 
-#define vec_new_sig(T) T##Vec T##Vec_new();
-#define vec_new(T)                                                             \
-    T##Vec T##Vec_new() {                                                      \
-        return (T##Vec){                                                       \
+#define VEC_NEW_SIG(T, Name) Name Name##_new(void);
+#define VEC_NEW(T, Name)                                                       \
+    Name Name##_new(void) {                                                    \
+        return (Name){                                                         \
             .buffer = NULL,                                                    \
             .capacity = 0,                                                     \
             .length = 0,                                                       \
         };                                                                     \
     }
 
-#define vec_push_sig(T) size_t T##Vec_push(T##Vec *array, T value);
-#define vec_push(T)                                                            \
-    size_t T##Vec_push(T##Vec *array, T value) {                               \
+#define VEC_PUSH_SIG(T, Name) size_t Name##_push(T##Vec *array, T value);
+#define VEC_PUSH(T, Name)                                                      \
+    size_t Name##_push(Name *array, T value) {                                 \
         if (array->capacity < array->length + 1) {                             \
             int old_capacity = array->capacity;                                \
-            array->capacity = GROW_CAPACITY(old_capacity);                     \
+            array->capacity = old_capacity < 8 ? 8 : old_capacity * 2;         \
+            array->buffer =                                                    \
+                (T *)reallocate(array->buffer, sizeof(T) * array->capacity);   \
             array->buffer = GROW_ARRAY(T, array->buffer, array->capacity);     \
         }                                                                      \
                                                                                \
@@ -34,20 +36,22 @@
         return array->length++;                                                \
     }
 
-#define vec_free_sig(T) void T##Vec_free(T##Vec *array);
-#define vec_free(T)                                                            \
-    void T##Vec_free(T##Vec *array) {                                          \
-        FREE_ARRAY(T, array->buffer);                                          \
+#define VEC_FREE_SIG(T, Name) void Name##_free(Name *array);
+#define VEC_FREE(T, Name)                                                      \
+    void Name##_free(Name *array) {                                            \
+        free(array->buffer);                                                   \
         array->buffer = NULL;                                                  \
         array->capacity = 0;                                                   \
         array->length = 0;                                                     \
     }
 
-#define VecHeader(T)                                                           \
-    create_vec(T) vec_new_sig(T) vec_push_sig(T) vec_free_sig(T)
+#define DECL_VEC_HEADER(T, Name)                                               \
+    CREATE_VEC(T, Name)                                                        \
+    VEC_NEW_SIG(T, Name) VEC_PUSH_SIG(T, Name) VEC_FREE_SIG(T, Name)
 
-#define Vec(T) create_vec(T) vec_new(T) vec_push(T) vec_free(T)
+#define DEF_VEC_T(T, Name)                                                     \
+    CREATE_VEC(T, Name) VEC_NEW(T, Name) VEC_PUSH(T, Name) VEC_FREE(T, Name)
 
-#define VecImpl(T) vec_new(T) vec_push(T) vec_free(T)
+#define DEF_VEC(T, Name) VEC_NEW(T, Name) VEC_PUSH(T, Name) VEC_FREE(T, Name)
 
 #endif

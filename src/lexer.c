@@ -326,4 +326,4 @@ void print_token(const char *source, Token token) {
            text);
 }
 
-VecImpl(Token)
+DEF_VEC(Token, TokenVec)

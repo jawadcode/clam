@@ -11,9 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// clang-format off
-VecImpl(AST)
-
 Parser new_parser(const char *source) {
     // clang-format on
     return (Parser){
@@ -234,7 +231,7 @@ static bool at_any(Parser *self, const TokenKind *list, size_t length) {
 }
 
 // clang-format off
-Vec(String)
+DEF_VEC_T(String, StringVec)
 
 static ASTResult parse_abstraction(Parser *self) {
     // clang-format on

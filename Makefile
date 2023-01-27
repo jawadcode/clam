@@ -1,6 +1,6 @@
 CC := clang
 CXX := clang++
-TARGET_EXEC := llambda
+TARGET_EXEC := clam
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src

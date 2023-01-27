@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 void *reallocate(void *pointer, size_t new_size) {
+    // `realloc` isn't guaranteed to free the pointer if the supplied size is 0
     if (new_size == 0) {
         free(pointer);
         return NULL;
