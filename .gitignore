@@ -2,6 +2,7 @@ build
 .vscode
 .idea
 .ccls-cache
+.cache
 .clang-format
 .replit
 replit.nix
