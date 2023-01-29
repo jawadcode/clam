@@ -1,6 +1,7 @@
 #ifndef LLAMBDA_LEXER_H
 #define LLAMBDA_LEXER_H
 
+#include "common.h"
 #include "vec.h"
 #include <stdint.h>
 #include <stdlib.h>

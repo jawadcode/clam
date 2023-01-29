@@ -40,7 +40,7 @@ static double parse_number(Parser *self, Span span) {
     return value / power;
 }
 
-DEF_RESULT(char *, SyntaxError, ParseString);
+DEF_RESULT(String, SyntaxError, ParseString);
 
 static ParseStringResult parse_string(Parser *self, Span span) {
     const char *str = self->lexer.source + span.start;
@@ -105,7 +105,7 @@ static ParseStringResult parse_string(Parser *self, Span span) {
 
     return (ParseStringResult){
         .tag = RESULT_OK,
-        .value = {.ok = buffer},
+        .value = {.ok = {.buffer = buffer, .length = strlen(buffer)}},
     };
 }
 
@@ -144,7 +144,7 @@ static ASTResult parse_literal(Parser *self) {
                             {.number = parse_number(self, current.span)}};
         break;
     case TK_STRING: {
-        char *string;
+        String string;
         RET_ERR_ASSIGN(string, parse_string(self, current.span),
                        ParseStringResult, ASTResult);
 
@@ -337,6 +337,7 @@ ParseResult parse_expr(Parser *self) {
                              lhs_ast.span};
         break;
     }
+    // TODO: Parse let bindings
     default:
         return (ParseResult){
             .tag = RESULT_ERR,
@@ -463,91 +464,4 @@ DONE:
                           .span = lhs.span,
                       }},
     };
-}
-
-static void buffer_write(char *buffer, size_t *buffer_length, String source) {
-    if (source.length == 0)
-        return;
-    size_t prev_length = *buffer_length;
-    *buffer_length += source.length;
-    buffer = (char *)realloc(buffer, sizeof(char) * *buffer_length);
-    memcpy(buffer + sizeof(char) * prev_length, source.buffer, source.length);
-}
-
-static void format_ast_index(Parser *self, char *buffer, size_t *buffer_length,
-                             ASTIndex ast_index, size_t spaces) {
-    AST ast = self->ast_arena.buffer[ast_index];
-    char *tabs = (char *)malloc(sizeof(char) * spaces);
-    if (spaces > 0)
-        memset(tabs, ' ', spaces);
-
-    String indent = {.buffer = tabs, .length = spaces};
-    String lparen = STR("(");
-    String rparen = STR(")");
-    String newline = STR("\n");
-
-    switch (ast.tag) {
-    case AST_LITERAL:
-    case AST_IDENT: {
-        String source = {
-            .buffer = self->source + ast.span.start,
-            .length = ast.span.end - ast.span.start,
-        };
-        buffer_write(buffer, buffer_length, indent);
-        buffer_write(buffer, buffer_length, source);
-        break;
-    }
-    case AST_ABSTRACTION: {
-        AST_Abstraction abs = ast.value.abstraction;
-        buffer_write(buffer, buffer_length, indent);
-        buffer_write(buffer, buffer_length, STR("(fun ["));
-        buffer_write(buffer, buffer_length, abs.argument);
-        buffer_write(buffer, buffer_length, STR("]\n"));
-
-        format_ast_index(self, buffer, buffer_length, abs.body, spaces + 2);
-        buffer_write(buffer, buffer_length, rparen);
-        break;
-    }
-    case AST_APPLICATION: {
-        AST_Application app = ast.value.application;
-        buffer_write(buffer, buffer_length, indent);
-        buffer_write(buffer, buffer_length, lparen);
-        format_ast_index(self, buffer, buffer_length, app.function, 0);
-        buffer_write(buffer, buffer_length, newline);
-
-        format_ast_index(self, buffer, buffer_length, app.argument, spaces + 2);
-        buffer_write(buffer, buffer_length, rparen);
-        break;
-    }
-    case AST_BINARY_OP: {
-        AST_BinaryOp binop = ast.value.binary_op;
-        String op = binop_to_string(binop.op);
-        buffer_write(buffer, buffer_length, indent);
-        buffer_write(buffer, buffer_length, lparen);
-        buffer_write(buffer, buffer_length, op);
-        buffer_write(buffer, buffer_length, newline);
-
-        format_ast_index(self, buffer, buffer_length, binop.lhs, spaces + 2);
-        buffer_write(buffer, buffer_length, newline);
-
-        format_ast_index(self, buffer, buffer_length, binop.rhs, spaces + 2);
-        buffer_write(buffer, buffer_length, newline);
-        buffer_write(buffer, buffer_length, rparen);
-        break;
-    }
-    default: {
-        buffer_write(buffer, buffer_length, STR("<unimplemented>"));
-        break;
-    }
-    }
-}
-
-String format_ast(Parser *self) {
-    char *buffer = (char *)malloc(sizeof(char));
-    size_t buffer_length = 0;
-
-    format_ast_index(self, buffer, &buffer_length, self->ast_arena.length - 1,
-                     0);
-    printf("buffer_length: %lu", buffer_length);
-    return (String){buffer, buffer_length};
 }

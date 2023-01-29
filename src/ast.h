@@ -24,7 +24,7 @@ typedef struct {
         void *unit;
         bool boolean;
         double number;
-        char *string;
+        String string;
     } value;
 } AST_Literal;
 
@@ -80,6 +80,7 @@ typedef enum {
 
 // A unary operation `op` on the node referenced by `operand`
 typedef struct {
+    Span op_span;
     AST_UnOp op;
     ASTIndex operand;
 } AST_UnaryOp;
@@ -108,6 +109,7 @@ typedef enum {
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'
 typedef struct {
+    Span op_span;
     AST_BinOp op;
     ASTIndex lhs;
     ASTIndex rhs;
@@ -166,6 +168,6 @@ typedef struct {
 // clang-format off
 DECL_VEC_HEADER(AST, ASTVec)
 
-String binop_to_string(AST_BinOp op);
+StringBuf format_ast(ASTVec *arena, size_t index);
 
 #endif

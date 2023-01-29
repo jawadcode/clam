@@ -11,9 +11,11 @@ DEPS := $(OBJS:.o=.d)
 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
-CFLAGS := -Wall -Wextra -pedantic -O0 -g -fsanitize=address -fno-omit-frame-pointer
+# CFLAGS := -Wall -Wextra -pedantic -O0 -g
+CFLAGS := -Wall -Wextra -pedantic -O0 -g -fsanitize=address
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
-LDFLAGS := -lm -O0 -g -fsanitize=address -fno-omit-frame-pointer
+# LDFLAGS := -lm -O0 -g
+LDFLAGS := -lm -O0 -g -fsanitize=address
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)

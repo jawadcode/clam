@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "vec.h"
+
 #define DEBUG_MODE
 
 #define ASSERT(assertion, message)                                             \
@@ -30,6 +32,12 @@ typedef struct {
     (String) { .buffer = x, .length = sizeof(x) - 1 }
 
 void String_print(String string);
+
+DECL_VEC_HEADER(char, StringBuf)
+
+void StringBuf_push_string(StringBuf *buf, String string);
+
+void StringBuf_print(StringBuf *buf);
 
 typedef struct {
     size_t start;

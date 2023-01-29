@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,44 +53,45 @@ void run(const char *source) {
             break;
     }
 
-    /*    // Rewind the lexer
-        parser.lexer = new_lexer(source);
-        ParseResult result = parse_expr(&parser);
-        switch (result.tag) {
-        case RESULT_OK:
-            puts("\nParser output:");
-            String_print(format_ast(&parser));
-            puts("");
-            break;
-        case RESULT_ERR: {
-            SyntaxError error = result.value.err;
-            switch (error.tag) {
-            case ERROR_INVALID_ESC_SEQ: {
-                SyntaxError_InvalidEscSeq err = error.error.invalid_esc_seq;
-                puts("SyntaxError: Invalid escape sequence\nstring:");
-                String_print((String){
-                    .buffer = source + err.string.start,
-                    .length = err.string.end - err.string.start,
-                });
-                puts("\nescape sequence:");
-                String_print((String){
-                    .buffer = source + err.escape_sequence.start,
-                    .length = err.string.end - err.string.start,
-                });
-                break;
-            }
-            case ERROR_UNEXPECTED_TOKEN: {
-                SyntaxError_UnexpectedToken err = error.error.unexpected_token;
-                puts("SyntaxError: Unexpected token\nexpected:");
-                puts(err.expected.buffer);
-                puts("got:");
-                print_token(source, err.got);
-                break;
-            }
-            }
+    // Rewind the lexer
+    parser.lexer = new_lexer(source);
+    ParseResult result = parse_expr(&parser);
+    switch (result.tag) {
+    case RESULT_OK: {
+        StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok.index);
+        StringBuf_print(&sexpr);
+        puts("");
+        break;
+    }
+    case RESULT_ERR: {
+        SyntaxError error = result.value.err;
+        switch (error.tag) {
+        case ERROR_INVALID_ESC_SEQ: {
+            SyntaxError_InvalidEscSeq err = error.error.invalid_esc_seq;
+            puts("SyntaxError: Invalid escape sequence\nstring:");
+            String_print((String){
+                .buffer = source + err.string.start,
+                .length = err.string.end - err.string.start,
+            });
+            puts("\nescape sequence:");
+            String_print((String){
+                .buffer = source + err.escape_sequence.start,
+                .length = err.string.end - err.string.start,
+            });
             break;
         }
-        } */
+        case ERROR_UNEXPECTED_TOKEN: {
+            SyntaxError_UnexpectedToken err = error.error.unexpected_token;
+            puts("SyntaxError: Unexpected token\nexpected:");
+            puts(err.expected.buffer);
+            puts("got:");
+            print_token(source, err.got);
+            break;
+        }
+        }
+        break;
+    }
+    }
 }
 
 void repl(void) {
@@ -137,7 +139,7 @@ int main(int argc, char **argv) {
         const char *path = argv[1];
         run_file(path);
     } else {
-        puts("Llambda Interpreter:\n");
+        puts("Clam Interpreter:\n");
         repl();
     }
     return 0;

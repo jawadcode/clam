@@ -1,7 +1,6 @@
 #ifndef LLAMBDA_VEC_H
 #define LLAMBDA_VEC_H
 
-#include "common.h"
 #include "memory.h"
 
 #define CREATE_VEC(T, Name)                                                    \
@@ -21,7 +20,7 @@
         };                                                                     \
     }
 
-#define VEC_PUSH_SIG(T, Name) size_t Name##_push(T##Vec *array, T value);
+#define VEC_PUSH_SIG(T, Name) size_t Name##_push(Name *array, T value);
 #define VEC_PUSH(T, Name)                                                      \
     size_t Name##_push(Name *array, T value) {                                 \
         if (array->capacity < array->length + 1) {                             \
@@ -29,7 +28,6 @@
             array->capacity = old_capacity < 8 ? 8 : old_capacity * 2;         \
             array->buffer =                                                    \
                 (T *)reallocate(array->buffer, sizeof(T) * array->capacity);   \
-            array->buffer = GROW_ARRAY(T, array->buffer, array->capacity);     \
         }                                                                      \
                                                                                \
         array->buffer[array->length] = value;                                  \

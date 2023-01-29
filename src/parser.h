@@ -26,7 +26,4 @@ DEF_RESULT(SpannedIndex, SyntaxError, Parse);
 // Parse the source as an expression, pushing the AST nodes to 'self.ast_arena'
 ParseResult parse_expr(Parser *self);
 
-// Format the AST as an S-Expression
-String format_ast(Parser *self);
-
 #endif
