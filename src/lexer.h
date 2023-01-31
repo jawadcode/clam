@@ -25,38 +25,40 @@ typedef enum {
     TK_STRING = 11, // String literal, e.g: "this is a string"
 
     /* MISC */
-    TK_IDENT = 12,  // Identifier
-    TK_ASSIGN = 13, // "="
-    TK_ARROW = 14,  // "=>"
-    TK_LPAREN = 15, // "("
-    TK_RPAREN = 16, // ")"
-    TK_COMMA = 17,  // ","
-    TK_FNPIPE = 18, // "|>"
+    TK_IDENT = 12,   // Identifier
+    TK_ASSIGN = 13,  // "="
+    TK_ARROW = 14,   // "=>"
+    TK_LPAREN = 15,  // "("
+    TK_RPAREN = 16,  // ")"
+    TK_LSQUARE = 17, // "["
+    TK_RSQUARE = 18, // "]"
+    TK_COMMA = 19,   // ","
+    TK_FNPIPE = 20,  // "|>"
 
     /* ARITHMETIC OPS */
     // TK_SUB (unary)
-    TK_ADD = 19, // "+"
-    TK_SUB = 20, // "-"
-    TK_MUL = 21, // "*"
-    TK_DIV = 22, // "/"
-    TK_MOD = 23, // "%"
+    TK_ADD = 21, // "+"
+    TK_SUB = 22, // "-"
+    TK_MUL = 23, // "*"
+    TK_DIV = 24, // "/"
+    TK_MOD = 25, // "%"
 
     /* BOOLEAN OPS */
-    TK_NOT = 24, // "not"
-    TK_AND = 25, // "and"
-    TK_OR = 26,  // "or"
+    TK_NOT = 26, // "not"
+    TK_AND = 27, // "and"
+    TK_OR = 28,  // "or"
 
     /* COMPARISON OPS */
-    TK_LT = 27,  // "<"
-    TK_LEQ = 28, // "<="
-    TK_GT = 29,  // ">"
-    TK_GEQ = 30, // ">="
-    TK_EQ = 31,  // "=="
-    TK_NEQ = 32, // "!="
+    TK_LT = 29,  // "<"
+    TK_LEQ = 30, // "<="
+    TK_GT = 31,  // ">"
+    TK_GEQ = 32, // ">="
+    TK_EQ = 33,  // "=="
+    TK_NEQ = 34, // "!="
 
     /* SPECIAL */
-    TK_INVALID = 33, // Invalid token
-    TK_EOF = 34,     // End Of File
+    TK_INVALID = 35, // Invalid token
+    TK_EOF = 36,     // End Of File
 } TokenKind;
 
 // A singular token

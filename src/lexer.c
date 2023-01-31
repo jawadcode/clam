@@ -173,6 +173,10 @@ static TokenKind next_kind(Lexer *lexer) {
         return TK_LPAREN;
     case ')':
         return TK_RPAREN;
+    case '[':
+        return TK_LSQUARE;
+    case ']':
+        return TK_RSQUARE;
     case ',':
         return TK_COMMA;
     case '+':
@@ -273,6 +277,10 @@ const char *token_kind_to_string(TokenKind kind) {
         return "(";
     case TK_RPAREN:
         return ")";
+    case TK_LSQUARE:
+        return "[";
+    case TK_RSQUARE:
+        return "]";
     case TK_COMMA:
         return ",";
     case TK_FNPIPE:

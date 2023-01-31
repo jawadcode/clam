@@ -47,7 +47,7 @@ static ParseStringResult parse_string(Parser *self, Span span) {
 
     // Malloc enough space for the contents (i.e. minus the start and end
     // quotes, plus the null terminator) of the string in the source, which
-    // means we might allocate in excess if has escape codes
+    // means we might allocate in excess if has escape codes, but who cares
     char *buffer = malloc(span.end - span.start - 1);
     size_t index = 0;
     bool escaped = false;
@@ -299,6 +299,48 @@ static ASTResult parse_abstraction(Parser *self) {
         .tag = RESULT_OK,
         .value = {.ok = abs},
     };
+}
+
+ParseResult parse_operand(Parser *self) {
+    // TODO: Copy the associated code from llamac_parser lmao
+    SpannedIndex lhs;
+    switch (peek_token(&self->lexer)->kind) {
+    case TK_UNIT:
+    case TK_TRUE:
+    case TK_FALSE:
+    case TK_NUMBER:
+    case TK_STRING: {
+        AST lhs_ast;
+        RET_ERR_ASSIGN(lhs_ast, parse_literal(self), ASTResult, ParseResult);
+        lhs = (SpannedIndex){ASTVec_push(&self->ast_arena, lhs_ast),
+                             lhs_ast.span};
+        break;
+    }
+    case TK_IDENT: {
+        AST lhs_ast = parse_ident(self);
+        lhs = (SpannedIndex){ASTVec_push(&self->ast_arena, lhs_ast),
+                             lhs_ast.span};
+        break;
+    }
+    case TK_LPAREN:
+        // Skip '('
+        next_token(&self->lexer);
+        RET_ERR_ASSIGN(lhs, parse_expr(self), ParseResult, ParseResult);
+        RET_ERR(TokenResult, expect(self, TK_RPAREN), ParseResult);
+        break;
+    case TK_FUN: {
+        AST lhs_ast;
+        RET_ERR_ASSIGN(lhs_ast, parse_abstraction(self), ASTResult,
+                       ParseResult);
+        lhs = (SpannedIndex){ASTVec_push(&self->ast_arena, lhs_ast),
+                             lhs_ast.span};
+        break;
+    }
+    }
+    return (ParseResult){.tag = RESULT_OK,
+                         .value = {
+                             .ok = lhs,
+                         }};
 }
 
 ParseResult parse_expr(Parser *self) {

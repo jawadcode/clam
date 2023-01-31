@@ -95,10 +95,19 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
     case AST_APPLICATION:
     case AST_PRINT:
     case AST_IF_ELSE:
-    case AST_UNARY_OP:
-    case AST_BINARY_OP: {
+    case AST_UNARY_OP: {
         StringBuf_push_string(buf, STR("UNIMPLEMENTED"));
         break;
+    }
+    case AST_BINARY_OP: {
+        AST_BinaryOp *binop = &node->value.binary_op;
+        StringBuf_push(buf, '(');
+        StringBuf_push_string(buf, binop_to_string(binop->op));
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, binop->lhs, buf);
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, binop->rhs, buf);
+        StringBuf_push(buf, ')');
     }
     }
 }
