@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "common.h"
+#include <stddef.h>
 #include <stdio.h>
 
 DEF_VEC(AST, ASTVec)
@@ -7,33 +8,42 @@ DEF_VEC(AST, ASTVec)
 static String binop_to_string(AST_BinOp op) {
     switch (op) {
     case BINOP_FNPIPE:
-        return (String){"|>", 2};
+        return STR("|>");
     case BINOP_ADD:
-        return (String){"+", 1};
+        return STR("+");
     case BINOP_SUB:
-        return (String){"-", 1};
+        return STR("-");
     case BINOP_MUL:
-        return (String){"*", 1};
+        return STR("*");
     case BINOP_DIV:
-        return (String){"/", 1};
+        return STR("/");
     case BINOP_MOD:
-        return (String){"%", 1};
+        return STR("%");
     case BINOP_AND:
-        return (String){"and", 3};
+        return STR("and");
     case BINOP_OR:
-        return (String){"or", 2};
+        return STR("or");
     case BINOP_LT:
-        return (String){"<", 1};
+        return STR("<");
     case BINOP_LEQ:
-        return (String){"<=", 2};
+        return STR("<=");
     case BINOP_GT:
-        return (String){">", 1};
+        return STR(">");
     case BINOP_GEQ:
-        return (String){">=", 2};
+        return STR(">=");
     case BINOP_EQ:
-        return (String){"==", 2};
+        return STR("==");
     case BINOP_NEQ:
-        return (String){"!=", 2};
+        return STR("!=");
+    }
+}
+
+static String unop_to_string(AST_UnOp op) {
+    switch (op) {
+    case AST_UNOP_NOT:
+        return STR("!");
+    case AST_UNOP_NEGATE:
+        return STR("-");
     }
 }
 
@@ -67,6 +77,17 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
     case AST_IDENT:
         StringBuf_push_string(buf, node->value.ident);
         break;
+    case AST_LIST: {
+        AST_List *list = &node->value.list;
+        StringBuf_push_string(buf, STR("(list"));
+        for (size_t i = 0; i < list->length; i++) {
+            StringBuf_push(buf, ' ');
+            ASTIndex item = list->buffer[i];
+            format_ast_node(arena, item, buf);
+        }
+        StringBuf_push(buf, ')');
+        break;
+    }
     case AST_LET_IN: {
         AST_LetIn *let_in = &node->value.let_in;
         StringBuf_push_string(buf, STR("(let ["));
@@ -92,11 +113,13 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ')');
         break;
     }
-    case AST_APPLICATION:
-    case AST_PRINT:
-    case AST_IF_ELSE:
     case AST_UNARY_OP: {
-        StringBuf_push_string(buf, STR("UNIMPLEMENTED"));
+        AST_UnaryOp *unop = &node->value.unary_op;
+        StringBuf_push(buf, '(');
+        StringBuf_push_string(buf, unop_to_string(unop->op));
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, unop->operand, buf);
+        StringBuf_push(buf, ')');
         break;
     }
     case AST_BINARY_OP: {
@@ -108,6 +131,26 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ' ');
         format_ast_node(arena, binop->rhs, buf);
         StringBuf_push(buf, ')');
+    }
+    case AST_APPLICATION: {
+        AST_Application *app = &node->value.application;
+        StringBuf_push_string(buf, STR("(call "));
+        format_ast_node(arena, app->function, buf);
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, app->argument, buf);
+        StringBuf_push(buf, ')');
+        break;
+    }
+    case AST_IF_ELSE: {
+        AST_IfElse *if_else = &node->value.if_else;
+        StringBuf_push_string(buf, STR("(if "));
+        format_ast_node(arena, if_else->condition, buf);
+        StringBuf_push_string(buf, STR(" :then "));
+        format_ast_node(arena, if_else->then, buf);
+        StringBuf_push_string(buf, STR(" :else "));
+        format_ast_node(arena, if_else->else_, buf);
+        StringBuf_push(buf, ')');
+        break;
     }
     }
 }

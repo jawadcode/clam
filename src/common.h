@@ -9,17 +9,20 @@
 
 #define DEBUG_MODE
 
-#define ASSERT(assertion, message)                                             \
-    _assert(assertion, "Assertion failed: " message)
-
-static inline void _assert(bool assertion, const char *message) {
 #ifdef DEBUG_MODE
-    if (!assertion) {
-        puts(message);
-        exit(1);
-    }
+#define STRINGIZE_DETAIL(x) #x
+#define STRINGIZE(x) STRINGIZE_DETAIL(x)
+#define ASSERT(assertion, message)                                             \
+    do {                                                                       \
+        if (!(assertion)) {                                                    \
+            puts("\x1b[31;1mAssertion Failed\x1b[0m \x1b[37m@ " __FILE__       \
+                 ":" STRINGIZE(__LINE__) "\x1b[0m = \"" message "\"");         \
+            exit(1);                                                           \
+        }                                                                      \
+    } while (0)
+#else
+#define ASSERT(assertion, message) (void)0
 #endif
-}
 
 // A string which consists of a 'buffer' which is not null-terminated and its
 // length in bytes
@@ -28,10 +31,13 @@ typedef struct {
     size_t length;
 } String;
 
+// ONLY WORKS FOR STRING LITERALS
 #define STR(x)                                                                 \
     (String) { .buffer = x, .length = sizeof(x) - 1 }
 
 void String_print(String string);
+
+void String_write(String string, FILE *file);
 
 DECL_VEC_HEADER(char, StringBuf)
 

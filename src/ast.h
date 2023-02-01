@@ -12,6 +12,8 @@
 // A type alias which represents the index into the arena of nodes
 typedef size_t ASTIndex;
 
+DECL_VEC_HEADER(ASTIndex, AST_List)
+
 // A literal, e.g: 'unit', 'true', '0.123' and '"a string"'
 typedef struct {
     enum {
@@ -57,11 +59,11 @@ typedef struct {
     ASTIndex argument;
 } AST_Application;
 
-// An expression that when evaluated, prints 'expr', this is built-in because
+/*// An expression that when evaluated, prints 'expr', this is built-in because
 // I'm lazy
 typedef struct {
     ASTIndex expr;
-} AST_Print;
+} AST_Print;*/
 
 // An if-else expression, operating on the condition 'condition', with a
 // consequence 'then' and an alternative 'else_'
@@ -74,8 +76,8 @@ typedef struct {
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
 typedef enum {
-    AST_UNOP_NOT = 24,
-    AST_UNOP_NEGATE = 20,
+    AST_UNOP_NOT = 26,
+    AST_UNOP_NEGATE = 22,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
@@ -88,23 +90,23 @@ typedef struct {
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
 typedef enum {
-    BINOP_FNPIPE = 18,
+    BINOP_FNPIPE = 20,
 
-    BINOP_ADD = 19,
-    BINOP_SUB = 20,
-    BINOP_MUL = 21,
-    BINOP_DIV = 22,
-    BINOP_MOD = 23,
+    BINOP_ADD = 21,
+    BINOP_SUB = 22,
+    BINOP_MUL = 23,
+    BINOP_DIV = 24,
+    BINOP_MOD = 25,
 
-    BINOP_AND = 25,
-    BINOP_OR = 26,
+    BINOP_AND = 27,
+    BINOP_OR = 28,
 
-    BINOP_LT = 27,
-    BINOP_LEQ = 28,
-    BINOP_GT = 29,
-    BINOP_GEQ = 30,
-    BINOP_EQ = 31,
-    BINOP_NEQ = 32,
+    BINOP_LT = 29,
+    BINOP_LEQ = 30,
+    BINOP_GT = 31,
+    BINOP_GEQ = 32,
+    BINOP_EQ = 33,
+    BINOP_NEQ = 34,
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'
@@ -120,10 +122,11 @@ typedef struct {
     enum {
         AST_LITERAL,
         AST_IDENT,
+        AST_LIST,
         AST_LET_IN,
         AST_ABSTRACTION,
         AST_APPLICATION,
-        AST_PRINT,
+        // AST_PRINT,
         AST_IF_ELSE,
         AST_UNARY_OP,
         AST_BINARY_OP,
@@ -131,10 +134,11 @@ typedef struct {
     union {
         AST_Literal literal;
         String ident;
+        AST_List list;
         AST_LetIn let_in;
         AST_Abstraction abstraction;
         AST_Application application;
-        AST_Print print;
+        // AST_Print print;
         AST_IfElse if_else;
         AST_UnaryOp unary_op;
         AST_BinaryOp binary_op;

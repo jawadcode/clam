@@ -58,7 +58,7 @@ void run(const char *source) {
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
-        StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok.index);
+        StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
         StringBuf_print(&sexpr);
         puts("");
         break;

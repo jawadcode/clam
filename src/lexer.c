@@ -241,87 +241,87 @@ Token *peek_token(Lexer *lexer) {
     return &lexer->peeked.value.some;
 }
 
-const char *token_kind_to_string(TokenKind kind) {
+String token_kind_to_string(TokenKind kind) {
     switch (kind) {
     case TK_LET:
-        return "let";
+        return STR("let");
     case TK_IN:
-        return "in";
+        return STR("in");
     case TK_FUN:
-        return "fun";
+        return STR("fun");
     case TK_IF:
-        return "if";
+        return STR("if");
     case TK_THEN:
-        return "then";
+        return STR("then");
     case TK_ELSE:
-        return "else";
+        return STR("else");
     case TK_PRINT:
-        return "print";
+        return STR("print");
     case TK_TRUE:
-        return "true";
+        return STR("true");
     case TK_FALSE:
-        return "false";
+        return STR("false");
     case TK_UNIT:
-        return "unit";
+        return STR("unit");
     case TK_NUMBER:
-        return "numeric literal";
+        return STR("numeric literal");
     case TK_STRING:
-        return "string literal";
+        return STR("string literal");
     case TK_IDENT:
-        return "identifier";
+        return STR("identifier");
     case TK_ASSIGN:
-        return "=";
+        return STR("=");
     case TK_ARROW:
-        return "=>";
+        return STR("=>");
     case TK_LPAREN:
-        return "(";
+        return STR("(");
     case TK_RPAREN:
-        return ")";
+        return STR(")");
     case TK_LSQUARE:
-        return "[";
+        return STR("[");
     case TK_RSQUARE:
-        return "]";
+        return STR("]");
     case TK_COMMA:
-        return ",";
+        return STR(",");
     case TK_FNPIPE:
-        return "|>";
+        return STR("|>");
     case TK_ADD:
-        return "+";
+        return STR("+");
     case TK_SUB:
-        return "-";
+        return STR("-");
     case TK_MUL:
-        return "*";
+        return STR("*");
     case TK_DIV:
-        return "/";
+        return STR("/");
     case TK_MOD:
-        return "%";
+        return STR("%");
     case TK_NOT:
-        return "!";
+        return STR("!");
     case TK_AND:
-        return "and";
+        return STR("and");
     case TK_OR:
-        return "or";
+        return STR("or");
     case TK_LT:
-        return "<";
+        return STR("<");
     case TK_LEQ:
-        return "<=";
+        return STR("<=");
     case TK_GT:
-        return ">";
+        return STR(">");
     case TK_GEQ:
-        return ">=";
+        return STR(">=");
     case TK_EQ:
-        return "==";
+        return STR("==");
     case TK_NEQ:
-        return "!=";
+        return STR("!=");
     case TK_INVALID:
-        return "invalid token";
+        return STR("invalid token");
     case TK_EOF:
-        return "EOF";
+        return STR("EOF");
     }
 }
 
 void print_token(const char *source, Token token) {
-    const char *kind = token_kind_to_string(token.kind);
+    String kind = token_kind_to_string(token.kind);
 
     size_t length = token.span.end - token.span.start;
     const char *start = source + token.span.start;
@@ -330,8 +330,9 @@ void print_token(const char *source, Token token) {
     text = (char *)memcpy(text, start, length);
     text[length] = '\0';
 
-    printf("%-16s @ %zu..%zu \"%s\"\n", kind, token.span.start, token.span.end,
-           text);
+    String_print(kind);
+    printf("%*c @ %zu..%zu \"%s\"\n", 16 - (int)kind.length, ' ',
+           token.span.start, token.span.end, text);
 }
 
 DEF_VEC(Token, TokenVec)

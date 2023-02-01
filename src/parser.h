@@ -16,12 +16,7 @@ typedef struct {
 // Creates a new parser that operates on 'source'
 Parser new_parser(const char *source);
 
-typedef struct {
-    ASTIndex index;
-    Span span;
-} SpannedIndex;
-
-DEF_RESULT(SpannedIndex, SyntaxError, Parse);
+DEF_RESULT(ASTIndex, SyntaxError, Parse);
 
 // Parse the source as an expression, pushing the AST nodes to 'self.ast_arena'
 ParseResult parse_expr(Parser *self);

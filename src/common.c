@@ -1,10 +1,15 @@
 #include "common.h"
 #include "memory.h"
 #include "vec.h"
+#include <stdio.h>
 #include <string.h>
 
 void String_print(String string) {
     fwrite(string.buffer, sizeof(char), string.length, stdout);
+}
+
+void String_write(String string, FILE *file) {
+    fwrite(string.buffer, sizeof(char), string.length, file);
 }
 
 DEF_VEC(char, StringBuf)

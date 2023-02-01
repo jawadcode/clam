@@ -100,7 +100,7 @@ Token *peek_token(Lexer *lexer);
 Token next_token(Lexer *lexer);
 
 // Convert a token kind to a string
-const char *token_kind_to_string(TokenKind kind);
+String token_kind_to_string(TokenKind kind);
 
 // Print a token using printf
 void print_token(const char *source, Token token);

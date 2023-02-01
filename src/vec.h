@@ -48,7 +48,8 @@
     VEC_NEW_SIG(T, Name) VEC_PUSH_SIG(T, Name) VEC_FREE_SIG(T, Name)
 
 #define DEF_VEC_T(T, Name)                                                     \
-    CREATE_VEC(T, Name) VEC_NEW(T, Name) VEC_PUSH(T, Name) VEC_FREE(T, Name)
+    CREATE_VEC(T, Name)                                                        \
+    static VEC_NEW(T, Name) static VEC_PUSH(T, Name) static VEC_FREE(T, Name)
 
 #define DEF_VEC(T, Name) VEC_NEW(T, Name) VEC_PUSH(T, Name) VEC_FREE(T, Name)
 
