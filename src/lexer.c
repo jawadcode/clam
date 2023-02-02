@@ -320,6 +320,13 @@ String token_kind_to_string(TokenKind kind) {
     }
 }
 
+String token_to_string(Lexer *lexer, Token token) {
+    return (String){
+        .buffer = lexer->source + token.span.start,
+        .length = token.span.end - token.span.start,
+    };
+}
+
 void print_token(const char *source, Token token) {
     String kind = token_kind_to_string(token.kind);
 

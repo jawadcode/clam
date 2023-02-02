@@ -102,6 +102,9 @@ Token next_token(Lexer *lexer);
 // Convert a token kind to a string
 String token_kind_to_string(TokenKind kind);
 
+// Get the token as a slice of the source string
+String token_to_string(Lexer *lexer, Token token);
+
 // Print a token using printf
 void print_token(const char *source, Token token);
 
