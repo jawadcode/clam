@@ -24,6 +24,20 @@
 #define ASSERT(assertion, message) (void)0
 #endif
 
+#ifdef _MSC_VER
+#define UNREACHABLE                                                            \
+    default:                                                                   \
+        __assume(0)
+#elif defined(__GNUC__) || defined(__clang__)
+#define UNREACHABLE                                                            \
+    default:                                                                   \
+        __builtin_unreachable()
+#else
+#define UNREACHABLE                                                            \
+    default:                                                                   \
+        ((void)0)
+#endif
+
 // A string which consists of a 'buffer' which is not null-terminated and its
 // length in bytes
 typedef struct {

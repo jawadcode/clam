@@ -134,7 +134,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
     }
     case AST_APPLICATION: {
         AST_Application *app = &node->value.application;
-        StringBuf_push_string(buf, STR("(call "));
+        StringBuf_push_string(buf, STR("(app "));
         format_ast_node(arena, app->function, buf);
         StringBuf_push(buf, ' ');
         format_ast_node(arena, app->argument, buf);
@@ -149,6 +149,15 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         format_ast_node(arena, if_else->then, buf);
         StringBuf_push_string(buf, STR(" :else "));
         format_ast_node(arena, if_else->else_, buf);
+        StringBuf_push(buf, ')');
+        break;
+    }
+    case AST_LIST_INDEX: {
+        AST_ListIndex *list_index = &node->value.list_index;
+        StringBuf_push_string(buf, STR("(get "));
+        format_ast_node(arena, list_index->list, buf);
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, list_index->index, buf);
         StringBuf_push(buf, ')');
         break;
     }

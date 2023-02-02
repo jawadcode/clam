@@ -13,9 +13,34 @@
 
 DEF_VEC_T(String, StringVec)
 
-DEF_RESULT(String, SyntaxError, ParseString);
 DEF_VEC(AST_LetBind, AST_LetBindVec)
 DEF_VEC(ASTIndex, AST_List)
+
+DEF_RESULT(String, SyntaxError, ParseString);
+DEF_RESULT(Token, SyntaxError, Token);
+DEF_RESULT(AST, SyntaxError, AST);
+
+#define TK_EXPR_LEN 12
+static const TokenKind TK_EXPR[TK_EXPR_LEN] = {
+    TK_UNIT,   TK_TRUE,    TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
+    TK_LPAREN, TK_LSQUARE, TK_LET,   TK_FUN,    TK_SUB,    TK_NOT};
+
+#define TK_BINOPS_LEN 15
+static const TokenKind TK_BINOPS[TK_BINOPS_LEN] = {
+    TK_FNPIPE, TK_ADD, TK_SUB, TK_MUL, TK_DIV, TK_MOD, TK_NOT, TK_AND,
+    TK_OR,     TK_LT,  TK_LEQ, TK_GT,  TK_GEQ, TK_EQ,  TK_NEQ};
+
+#define TK_EXPR_TERMINATORS_LEN 5
+static const TokenKind TK_EXPR_TERMINATORS[TK_EXPR_TERMINATORS_LEN] = {
+    TK_RPAREN, TK_RSQUARE, TK_COMMA, TK_IN, TK_EOF};
+
+#define BINOPS_AND_EXPR_TERMINATORS_LEN 26
+static const TokenKind
+    BINOPS_AND_EXPR_TERMINATORS[BINOPS_AND_EXPR_TERMINATORS_LEN] = {
+        TK_FNPIPE, TK_ADD,     TK_SUB,     TK_MUL, TK_DIV, TK_MOD, TK_NOT,
+        TK_AND,    TK_OR,      TK_LT,      TK_LEQ, TK_GT,  TK_GEQ, TK_EQ,
+        TK_NEQ,    TK_LPAREN,  TK_LSQUARE, TK_LET, TK_FUN, TK_SUB, TK_NOT,
+        TK_RPAREN, TK_RSQUARE, TK_COMMA,   TK_IN,  TK_EOF};
 
 Parser new_parser(const char *source) {
     // clang-format on
@@ -24,6 +49,19 @@ Parser new_parser(const char *source) {
         .lexer = new_lexer(source),
         .ast_arena = ASTVec_new(),
     };
+}
+
+static inline Token *peek(Parser *self) { return peek_token(&self->lexer); }
+
+static inline Token next(Parser *self) { return next_token(&self->lexer); }
+
+static bool in(TokenKind tk, const TokenKind list[], size_t len) {
+    bool contains = false;
+    for (size_t i = 0; i < len; i++) {
+        if (list[i] == tk)
+            contains = true;
+    }
+    return contains;
 }
 
 static double parse_number(Parser *self, Span span) {
@@ -113,24 +151,8 @@ static ParseStringResult parse_string(Parser *self, Span span) {
     };
 }
 
-DEF_RESULT(AST, SyntaxError, AST);
-
-#ifdef _MSC_VER
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        __assume(0)
-#elif defined(__GNUC__) || defined(__clang__)
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        __builtin_unreachable()
-#else
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        ((void)0)
-#endif
-
 static ASTResult parse_literal(Parser *self) {
-    Token current = next_token(&self->lexer);
+    Token current = next(self);
     AST_Literal lit;
 
     switch (current.kind) {
@@ -177,7 +199,7 @@ static ASTResult parse_literal(Parser *self) {
 }
 
 static AST parse_ident(Parser *self) {
-    Token current = next_token(&self->lexer);
+    Token current = next(self);
 
     return (AST){
         .tag = AST_IDENT,
@@ -192,15 +214,8 @@ static AST parse_ident(Parser *self) {
         .span = current.span};
 }
 
-#define TK_EXPR_LENGTH 12
-static const TokenKind TK_EXPR[TK_EXPR_LENGTH] = {
-    TK_UNIT,   TK_TRUE,    TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
-    TK_LPAREN, TK_LSQUARE, TK_LET,   TK_FUN,    TK_SUB,    TK_NOT};
-
-DEF_RESULT(Token, SyntaxError, Token);
-
 static TokenResult expect(Parser *self, TokenKind kind) {
-    Token token = next_token(&self->lexer);
+    Token token = next(self);
     String kind_string = token_kind_to_string(kind);
 
     if (token.kind != kind) {
@@ -220,11 +235,11 @@ static TokenResult expect(Parser *self, TokenKind kind) {
 }
 
 static bool at(Parser *self, TokenKind kind) {
-    return peek_token(&self->lexer)->kind == kind;
+    return peek(self)->kind == kind;
 }
 
 static bool at_any(Parser *self, const TokenKind *list, size_t length) {
-    Token *current = peek_token(&self->lexer);
+    Token *current = peek(self);
 
     for (size_t i = 0; i < length; i++)
         if (current->kind == list[i])
@@ -236,7 +251,7 @@ static bool at_any(Parser *self, const TokenKind *list, size_t length) {
 // clang-format off
 static ASTResult parse_abstraction(Parser *self) {
     // clang-format on
-    Token fun_token = next_token(&self->lexer);
+    Token fun_token = next(self);
     StringVec args = StringVec_new();
 
     // Mandatory first argument
@@ -249,7 +264,7 @@ static ASTResult parse_abstraction(Parser *self) {
     StringVec_push(&args, first_arg_string);
 
     while (at(self, TK_IDENT)) {
-        Token arg = next_token(&self->lexer);
+        Token arg = next(self);
         String arg_string = (String){
             .buffer = self->lexer.source + arg.span.start,
             .length = arg.span.end - arg.span.start,
@@ -303,16 +318,20 @@ static ASTResult parse_abstraction(Parser *self) {
 }
 
 static ASTResult parse_let_binding(Parser *self) {
-    Span span = (Span){.start = next_token(&self->lexer).span.start};
+    Span span = (Span){.start = next(self).span.start};
     AST_LetBindVec bindings = AST_LetBindVec_new();
     while (at(self, TK_IDENT)) {
-        Span ident_span = next_token(&self->lexer).span;
+        Span ident_span = next(self).span;
         String ident = {.buffer = self->source + ident_span.start,
                         .length = ident_span.end - ident_span.start};
         RET_ERR(TokenResult, expect(self, TK_ASSIGN), ASTResult);
         ASTIndex value;
         RET_ERR_ASSIGN(value, parse_expr(self), ParseResult, ASTResult);
         AST_LetBindVec_push(&bindings, (AST_LetBind){ident, value});
+        Token *peeked = peek(self);
+        if (peeked->kind == TK_COMMA) {
+            next(self);
+        }
     }
     RET_ERR(TokenResult, expect(self, TK_IN), ASTResult);
     ASTIndex body;
@@ -327,7 +346,7 @@ static ASTResult parse_let_binding(Parser *self) {
 }
 
 static ASTResult parse_unop(Parser *self) {
-    Token op_token = next_token(&self->lexer);
+    Token op_token = next(self);
     Span op_span = op_token.span;
     // The tokenkind is checked before calling so we can safely cast
     AST_UnOp op = (AST_UnOp)op_token.kind;
@@ -340,29 +359,44 @@ static ASTResult parse_unop(Parser *self) {
 }
 
 static ASTResult parse_list(Parser *self) {
-    Span list_span = (Span){.start = next_token(&self->lexer).span.start};
+    Span list_span = (Span){.start = next(self).span.start};
     AST_List items = AST_List_new();
     while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RPAREN}, 2)) {
         ASTIndex item;
         RET_ERR_ASSIGN(item, parse_expr(self), ParseResult, ASTResult);
         AST_List_push(&items, item);
-        TokenKind peeked = peek_token(&self->lexer)->kind;
+        TokenKind peeked = peek(self)->kind;
         if (peeked == TK_COMMA) {
-            next_token(&self->lexer);
+            next(self);
         } else if (peeked == TK_RPAREN) {
             break;
         }
     }
-    list_span.end = next_token(&self->lexer).span.end;
+    list_span.end = next(self).span.end;
     return (ASTResult){
         .tag = RESULT_OK,
         .value = {.ok = (AST){.tag = AST_LIST, .value = {.list = items}}}};
 }
 
+static ParseResult parse_list_index(Parser *self, ASTIndex list) {
+    // skip [
+    next(self);
+    ASTIndex index;
+    RET_ERR_ASSIGN(index, parse_expr(self), ParseResult, ParseResult);
+    Token rsquare;
+    RET_ERR_ASSIGN(rsquare, expect(self, TK_RSQUARE), TokenResult, ParseResult);
+    AST expr = {.tag = AST_LIST,
+                .value = {.list_index = {list, index}},
+                .span = {.start = self->ast_arena.buffer[list].span.start,
+                         .end = rsquare.span.end}};
+    return (ParseResult){.tag = RESULT_OK,
+                         .value = {.ok = ASTVec_push(&self->ast_arena, expr)}};
+}
+
 static ParseResult parse_operand(Parser *self) {
     // TODO: Copy the associated code from llamac_parser lmao
     ASTIndex lhs;
-    switch (peek_token(&self->lexer)->kind) {
+    switch (peek(self)->kind) {
     case TK_UNIT:
     case TK_TRUE:
     case TK_FALSE:
@@ -380,7 +414,7 @@ static ParseResult parse_operand(Parser *self) {
     }
     case TK_LPAREN:
         // Skip '('
-        next_token(&self->lexer);
+        next(self);
         RET_ERR_ASSIGN(lhs, parse_expr(self), ParseResult, ParseResult);
         RET_ERR(TokenResult, expect(self, TK_RPAREN), ParseResult);
         break;
@@ -419,9 +453,50 @@ static ParseResult parse_operand(Parser *self) {
                     .tag = ERROR_UNEXPECTED_TOKEN,
                     .error = {.unexpected_token = (SyntaxError_UnexpectedToken){
                                   .expected = STR("expression"),
-                                  .got = next_token(&self->lexer),
+                                  .got = next(self),
                               }}}}};
     }
+    }
+    while (true) {
+        if (at_any(self, TK_EXPR, TK_EXPR_LEN)) {
+            ASTIndex argument;
+            RET_ERR_ASSIGN(argument, parse_expr(self), ParseResult,
+                           ParseResult);
+
+            AST lhs_ast =
+                (AST){.tag = AST_APPLICATION,
+                      .value =
+                          {
+                              .application =
+                                  (AST_Application){
+                                      .function = lhs,
+                                      .argument = argument,
+                                  },
+                          },
+                      .span = {
+                          .start = self->ast_arena.buffer[lhs].span.start,
+                          .end = self->ast_arena.buffer[argument].span.end,
+                      }};
+            lhs = ASTVec_push(&self->ast_arena, lhs_ast);
+        }
+        if (at(self, TK_LSQUARE)) {
+            RET_ERR_ASSIGN(lhs, parse_list_index(self, lhs), ParseResult,
+                           ParseResult);
+        }
+        if (at_any(self, BINOPS_AND_EXPR_TERMINATORS,
+                   BINOPS_AND_EXPR_TERMINATORS_LEN)) {
+            break;
+        }
+        if (peek(self)->kind == TK_LSQUARE) {
+            continue;
+        } else {
+            return (ParseResult){
+                .tag = RESULT_ERR,
+                .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
+                                  .error = {.unexpected_token = {
+                                                .expected = STR("expression,"),
+                                                .got = next(self)}}}}};
+        }
     }
     return (ParseResult){.tag = RESULT_OK,
                          .value = {
@@ -433,29 +508,8 @@ ParseResult parse_expr(Parser *self) {
     ASTIndex lhs;
     RET_ERR_ASSIGN(lhs, parse_operand(self), ParseResult, ParseResult);
 
-    while (at_any(self, TK_EXPR, TK_EXPR_LENGTH)) {
-        ASTIndex argument;
-        RET_ERR_ASSIGN(argument, parse_expr(self), ParseResult, ParseResult);
-
-        AST lhs_ast =
-            (AST){.tag = AST_APPLICATION,
-                  .value =
-                      {
-                          .application =
-                              (AST_Application){
-                                  .function = lhs,
-                                  .argument = argument,
-                              },
-                      },
-                  .span = {
-                      .start = self->ast_arena.buffer[lhs].span.start,
-                      .end = self->ast_arena.buffer[argument].span.end,
-                  }};
-        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
-    }
-
-    for (;;) {
-        Token *peeked = peek_token(&self->lexer);
+    /*for (;;) {
+        Token *peeked = peek(self);
         TokenKind op;
         switch (peeked->kind) {
         case TK_FNPIPE:
@@ -495,7 +549,7 @@ ParseResult parse_expr(Parser *self) {
                                                 .expected =
                                                     STR("operator, ')', "
                                                         "'in', or ','"),
-                                                .got = next_token(&self->lexer),
+                                                .got = next(self),
                                             },
                                     },
                             },
@@ -503,7 +557,7 @@ ParseResult parse_expr(Parser *self) {
             };
         }
 
-        next_token(&self->lexer);
+        next(self);
 
         ASTIndex rhs;
         RET_ERR_ASSIGN(rhs, parse_expr(self), ParseResult, ParseResult);
@@ -526,6 +580,40 @@ ParseResult parse_expr(Parser *self) {
         lhs = ASTVec_push(&self->ast_arena, lhs_ast);
     }
 DONE:
+
+    return (ParseResult){
+        .tag = RESULT_OK,
+        .value = {.ok = lhs},
+    }; */
+    while (true) {
+        Token *peeked = peek(self);
+        Token op;
+        if (in(peeked->kind, TK_BINOPS, TK_BINOPS_LEN)) {
+            op = next(self);
+        } else if (in(peeked->kind, TK_EXPR_TERMINATORS,
+                      TK_EXPR_TERMINATORS_LEN)) {
+            break;
+        } else {
+            return (ParseResult){
+                .tag = RESULT_ERR,
+                .value = {
+                    .err = {
+                        .tag = ERROR_UNEXPECTED_TOKEN,
+                        .error = {.unexpected_token = {
+                                      .expected = STR(
+                                          "operator or expression terminator"),
+                                      .got = next(self)}}}}};
+        }
+
+        ASTIndex rhs;
+        RET_ERR_ASSIGN(rhs, parse_operand(self), ParseResult, ParseResult);
+        AST lhs_ast = (AST){
+            .tag = AST_BINARY_OP,
+            .value = {
+                .binary_op = (AST_BinaryOp){
+                    .op_span = op.span, .op = (AST_BinOp)op.kind, lhs, rhs}}};
+        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
+    }
 
     return (ParseResult){
         .tag = RESULT_OK,

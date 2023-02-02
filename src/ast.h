@@ -117,6 +117,12 @@ typedef struct {
     ASTIndex rhs;
 } AST_BinaryOp;
 
+// A list index expression
+typedef struct {
+    ASTIndex list;
+    ASTIndex index;
+} AST_ListIndex;
+
 // The *A*bstract *S*yntax *T*ree
 typedef struct {
     enum {
@@ -130,6 +136,7 @@ typedef struct {
         AST_IF_ELSE,
         AST_UNARY_OP,
         AST_BINARY_OP,
+        AST_LIST_INDEX,
     } tag;
     union {
         AST_Literal literal;
@@ -142,6 +149,7 @@ typedef struct {
         AST_IfElse if_else;
         AST_UnaryOp unary_op;
         AST_BinaryOp binary_op;
+        AST_ListIndex list_index;
     } value;
     Span span;
 } AST;
