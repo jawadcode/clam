@@ -43,12 +43,12 @@ static const TokenKind
         TK_RPAREN, TK_RSQUARE, TK_COMMA,   TK_IN,  TK_EOF};
 
 Parser new_parser(const char *source) {
-  // clang-format on
-  return (Parser){
-      .source = source,
-      .lexer = new_lexer(source),
-      .ast_arena = ASTVec_new(),
-  };
+    // clang-format on
+    return (Parser){
+        .source = source,
+        .lexer = new_lexer(source),
+        .ast_arena = ASTVec_new(),
+    };
 }
 
 static inline Token *peek(Parser *self) { return peek_token(&self->lexer); }
@@ -56,196 +56,196 @@ static inline Token *peek(Parser *self) { return peek_token(&self->lexer); }
 static inline Token next(Parser *self) { return next_token(&self->lexer); }
 
 static bool in(TokenKind tk, const TokenKind list[], size_t len) {
-  bool contains = false;
-  for (size_t i = 0; i < len; i++) {
-    if (list[i] == tk)
-      contains = true;
-  }
-  return contains;
+    bool contains = false;
+    for (size_t i = 0; i < len; i++) {
+        if (list[i] == tk)
+            contains = true;
+    }
+    return contains;
 }
 
 static double parse_number(Parser *self, Span span) {
-  const char *num = self->lexer.source + span.start;
+    const char *num = self->lexer.source + span.start;
 
-  double value = 0.0;
-  while (*num >= '0' && *num <= '9') {
-    value = value * 10.0 + (*num++ - '0');
-  }
+    double value = 0.0;
+    while (*num >= '0' && *num <= '9') {
+        value = value * 10.0 + (*num++ - '0');
+    }
 
-  if (*num == '.')
-    num++;
+    if (*num == '.')
+        num++;
 
-  double power = 1.0;
-  while (*num >= '0' && *num <= '9') {
-    value = value * 10.0 + (*num++ - '0');
-    power *= 10.0;
-  }
+    double power = 1.0;
+    while (*num >= '0' && *num <= '9') {
+        value = value * 10.0 + (*num++ - '0');
+        power *= 10.0;
+    }
 
-  return value / power;
+    return value / power;
 }
 
 static ParseStringResult parse_string(Parser *self, Span span) {
-  const char *str = self->lexer.source + span.start;
+    const char *str = self->lexer.source + span.start;
 
-  // Malloc enough space for the contents (i.e. minus the start and end
-  // quotes, plus the null terminator) of the string in the source, which
-  // means we might allocate in excess if has escape codes, but who cares
-  char *buffer = malloc(span.end - span.start - 1);
-  size_t index = 0;
-  bool escaped = false;
+    // Malloc enough space for the contents (i.e. minus the start and end
+    // quotes, plus the null terminator) of the string in the source, which
+    // means we might allocate in excess if has escape codes, but who cares
+    char *buffer = malloc(span.end - span.start - 1);
+    size_t index = 0;
+    bool escaped = false;
 
-  // Skips the opening quote
-  while (str[++index] != '"' || (escaped && str[index] == '"')) {
-    if (escaped) {
-      switch (str[index]) {
-      case 'n':
-        buffer[index] = '\n';
-        break;
-      case 'r':
-        buffer[index] = '\r';
-        break;
-      case 't':
-        buffer[index] = '\t';
-        break;
-      case '0':
-        buffer[index] = '\0';
-        break;
-      case '"':
-      case '\\':
-        buffer[index] = str[index];
-        break;
-      default: {
-        size_t start = str + index - self->lexer.source - 1;
-        size_t end = start + 2;
-        return (ParseStringResult){
-            .tag = RESULT_ERR,
-            .value =
-                {
-                    .err =
-                        (SyntaxError){
-                            ERROR_INVALID_ESC_SEQ,
-                            {
-                                .invalid_esc_seq =
+    // Skips the opening quote
+    while (str[++index] != '"' || (escaped && str[index] == '"')) {
+        if (escaped) {
+            switch (str[index]) {
+            case 'n':
+                buffer[index] = '\n';
+                break;
+            case 'r':
+                buffer[index] = '\r';
+                break;
+            case 't':
+                buffer[index] = '\t';
+                break;
+            case '0':
+                buffer[index] = '\0';
+                break;
+            case '"':
+            case '\\':
+                buffer[index] = str[index];
+                break;
+            default: {
+                size_t start = str + index - self->lexer.source - 1;
+                size_t end = start + 2;
+                return (ParseStringResult){
+                    .tag = RESULT_ERR,
+                    .value =
+                        {
+                            .err =
+                                (SyntaxError){
+                                    ERROR_INVALID_ESC_SEQ,
                                     {
-                                        .string = span,
-                                        .escape_sequence = {start, end},
+                                        .invalid_esc_seq =
+                                            {
+                                                .string = span,
+                                                .escape_sequence = {start, end},
+                                            },
                                     },
-                            },
+                                },
                         },
-                },
-        };
-      }
-      }
-    } else if (str[index] == '\\') {
-      escaped = true;
-    } else {
-      buffer[index] = str[index];
+                };
+            }
+            }
+        } else if (str[index] == '\\') {
+            escaped = true;
+        } else {
+            buffer[index] = str[index];
+        }
     }
-  }
-  buffer = (char *)realloc(buffer, sizeof(char) * (index + 1));
-  buffer[index] = '\0';
+    buffer = (char *)realloc(buffer, sizeof(char) * (index + 1));
+    buffer[index] = '\0';
 
-  return (ParseStringResult){
-      .tag = RESULT_OK,
-      .value = {.ok = {.buffer = buffer, .length = strlen(buffer)}},
-  };
+    return (ParseStringResult){
+        .tag = RESULT_OK,
+        .value = {.ok = {.buffer = buffer, .length = strlen(buffer)}},
+    };
 }
 
 static ASTResult parse_literal(Parser *self) {
-  Token current = next(self);
-  AST_Literal lit;
+    Token current = next(self);
+    AST_Literal lit;
 
-  switch (current.kind) {
-  case TK_UNIT:
-    lit = (AST_Literal){LITERAL_UNIT, {.unit = NULL}};
-    break;
-  case TK_TRUE:
-    lit = (AST_Literal){LITERAL_BOOL, {.boolean = true}};
-    break;
-  case TK_FALSE:
-    lit = (AST_Literal){LITERAL_BOOL, {.boolean = false}};
-    break;
-  case TK_NUMBER:
-    lit = (AST_Literal){LITERAL_NUMBER,
-                        {.number = parse_number(self, current.span)}};
-    break;
-  case TK_STRING: {
-    String string;
-    RET_ERR_ASSIGN(string, parse_string(self, current.span), ParseStringResult,
-                   ASTResult);
+    switch (current.kind) {
+    case TK_UNIT:
+        lit = (AST_Literal){LITERAL_UNIT, {.unit = NULL}};
+        break;
+    case TK_TRUE:
+        lit = (AST_Literal){LITERAL_BOOL, {.boolean = true}};
+        break;
+    case TK_FALSE:
+        lit = (AST_Literal){LITERAL_BOOL, {.boolean = false}};
+        break;
+    case TK_NUMBER:
+        lit = (AST_Literal){LITERAL_NUMBER,
+                            {.number = parse_number(self, current.span)}};
+        break;
+    case TK_STRING: {
+        String string;
+        RET_ERR_ASSIGN(string, parse_string(self, current.span),
+                       ParseStringResult, ASTResult);
 
-    lit = (AST_Literal){
-        .tag = LITERAL_STRING,
-        .value = {.string = string},
+        lit = (AST_Literal){
+            .tag = LITERAL_STRING,
+            .value = {.string = string},
+        };
+        break;
+    }
+        // Any other value should be unreachable
+        UNREACHABLE;
+    }
+
+    return (ASTResult){
+        .tag = RESULT_OK,
+        .value =
+            {
+                .ok =
+                    (AST){
+                        .tag = AST_LITERAL,
+                        .value = {.literal = lit},
+                        .span = current.span,
+                    },
+            },
     };
-    break;
-  }
-    // Any other value should be unreachable
-    UNREACHABLE;
-  }
-
-  return (ASTResult){
-      .tag = RESULT_OK,
-      .value =
-          {
-              .ok =
-                  (AST){
-                      .tag = AST_LITERAL,
-                      .value = {.literal = lit},
-                      .span = current.span,
-                  },
-          },
-  };
 }
 
 static AST parse_ident(Parser *self) {
-  Token current = next(self);
+    Token current = next(self);
 
-  return (AST){
-      .tag = AST_IDENT,
-      .value =
-          {
-              .ident =
-                  {
-                      .buffer = self->lexer.source + current.span.start,
-                      .length = current.span.end - current.span.start,
-                  },
-          },
-      .span = current.span};
+    return (AST){
+        .tag = AST_IDENT,
+        .value =
+            {
+                .ident =
+                    {
+                        .buffer = self->lexer.source + current.span.start,
+                        .length = current.span.end - current.span.start,
+                    },
+            },
+        .span = current.span};
 }
 
 static TokenResult expect(Parser *self, TokenKind kind) {
-  Token token = next(self);
-  String kind_string = token_kind_to_string(kind);
+    Token token = next(self);
+    String kind_string = token_kind_to_string(kind);
 
-  if (token.kind != kind) {
-    return (TokenResult){
-        .tag = RESULT_ERR,
-        .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
-                          .error = {.unexpected_token = {.expected =
-                                                             kind_string,
-                                                         .got = token}}}},
-    };
-  } else {
-    return (TokenResult){
-        .tag = RESULT_OK,
-        .value = {.ok = token},
-    };
-  }
+    if (token.kind != kind) {
+        return (TokenResult){
+            .tag = RESULT_ERR,
+            .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
+                              .error = {.unexpected_token = {.expected =
+                                                                 kind_string,
+                                                             .got = token}}}},
+        };
+    } else {
+        return (TokenResult){
+            .tag = RESULT_OK,
+            .value = {.ok = token},
+        };
+    }
 }
 
 static bool at(Parser *self, TokenKind kind) {
-  return peek(self)->kind == kind;
+    return peek(self)->kind == kind;
 }
 
 static bool at_any(Parser *self, const TokenKind *list, size_t length) {
-  Token *current = peek(self);
+    Token *current = peek(self);
 
-  for (size_t i = 0; i < length; i++)
-    if (current->kind == list[i])
-      return true;
+    for (size_t i = 0; i < length; i++)
+        if (current->kind == list[i])
+            return true;
 
-  return false;
+    return false;
 }
 
 // clang-format off
