@@ -248,103 +248,45 @@ static bool at_any(Parser *self, const TokenKind *list, size_t length) {
     return false;
 }
 
-// clang-format off
-/*static ASTResult parse_abstraction(Parser *self) {
-    // clang-format on
+static ParseResult parse_abstraction(Parser *self) {
     Token fun_token = next(self);
+
     StringVec args = StringVec_new();
-
-    // Mandatory first argument
-    Token first_arg;
-    RET_ERR_ASSIGN(first_arg, expect(self, TK_IDENT), TokenResult, ASTResult);
-    String first_arg_string = (String){
-        .buffer = self->lexer.source + first_arg.span.start,
-        .length = first_arg.span.end - first_arg.span.start,
-    };
-    StringVec_push(&args, first_arg_string);
-
-    while (at(self, TK_IDENT)) {
-        Token arg = next(self);
-        String arg_string = (String){
-            .buffer = self->lexer.source + arg.span.start,
-            .length = arg.span.end - arg.span.start,
-        };
-        StringVec_push(&args, arg_string);
-    }
-
-    RET_ERR(TokenResult, expect(self, TK_ARROW), ASTResult);
-
-    ASTIndex body;
-    RET_ERR_ASSIGN(body, parse_expr(self), ParseResult, ASTResult);
-
-    AST abs = (AST){.tag = AST_ABSTRACTION,
-                    .value =
-                        {
-                            .abstraction =
-                                (AST_Abstraction){
-                                    .argument = args.buffer[args.length - 1],
-                                    .body = body,
-                                },
-                        },
-                    .span = {
-                        .start = fun_token.span.start,
-                        .end = self->ast_arena.buffer[body].span.end,
-                    }};
-    ASTIndex abs_index = ASTVec_push(&self->ast_arena, abs);
-    // We do a little bit of currying
-    if (args.length > 1) {
-        for (size_t i = args.length - 2; i <= 0; i--) {
-            abs = (AST){
-                .tag = AST_ABSTRACTION,
-                .value =
-                    {
-                        .abstraction =
-                            (AST_Abstraction){
-                                .argument = args.buffer[i],
-                                .body = abs_index,
-                            },
-                    },
-                .span = {fun_token.span.start,
-                         self->ast_arena.buffer[body].span.end},
-            };
-            abs_index = ASTVec_push(&self->ast_arena, abs);
-        }
-    }
-
-    return (ASTResult){
-        .tag = RESULT_OK,
-        .value = {.ok = abs},
-    };
-} */
-
-static ASTResult parse_abstraction(Parser *self) {
-    Token fun_token = next(self);
-    StringVec args = StringVec_new();
-    
     Token first_param_token;
-    RET_ERR_ASSIGN(first_param_token, expect(self, TK_IDENT), TokenResult, ASTResult);
+    RET_ERR_ASSIGN(first_param_token, expect(self, TK_IDENT), TokenResult,
+                   ParseResult);
     StringVec_push(&args, token_to_string(&self->lexer, first_param_token));
-    
+
     while (at(self, TK_IDENT)) {
         Token arg_token = next(self);
         StringVec_push(&args, token_to_string(&self->lexer, arg_token));
     }
-    RET_ERR(TokenResult, expect(self, TK_ARROW), ASTResult);
-    ASTIndex body;
-    RET_ERR_ASSIGN(body, parse_expr(self), ParseResult, ASTResult);
-    for (size_t i = args.length; i != 1; i--) {
+    RET_ERR(TokenResult, expect(self, TK_ARROW), ParseResult);
+
+    ASTIndex abs;
+    RET_ERR_ASSIGN(abs, parse_expr(self), ParseResult, ParseResult);
+    Span abs_span = {.start = fun_token.span.start,
+                     .end = self->ast_arena.buffer[abs].span.end};
+    for (size_t i = args.length; i > 0; i--) {
         AST body_ast = {
             .tag = AST_ABSTRACTION,
-            .value = {
-                .abstraction = {
-                    .argument = args.buffer[i],
-                    .body = body,
-                }
-            },
-            .span = self->ast_arena.buffer[body].span
+            .value = {.abstraction =
+                          {
+                              .argument = args.buffer[i - 1],
+                              .body = abs,
+                          }},
+            .span = abs_span,
         };
-        body = ASTVec_push(&self->ast_arena, body_ast);
+        abs = ASTVec_push(&self->ast_arena, body_ast);
     }
+    StringVec_free(&args);
+    return (ParseResult){
+        .tag = RESULT_OK,
+        .value =
+            {
+                .ok = abs,
+            },
+    };
 }
 
 static ASTResult parse_let_binding(Parser *self) {
@@ -424,7 +366,6 @@ static ParseResult parse_list_index(Parser *self, ASTIndex list) {
 }
 
 static ParseResult parse_operand(Parser *self) {
-    // TODO: Copy the associated code from llamac_parser lmao
     ASTIndex lhs;
     switch (peek(self)->kind) {
     case TK_UNIT:
@@ -462,10 +403,7 @@ static ParseResult parse_operand(Parser *self) {
         break;
     }
     case TK_FUN: {
-        AST lhs_ast;
-        RET_ERR_ASSIGN(lhs_ast, parse_abstraction(self), ASTResult,
-                       ParseResult);
-        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
+        RET_ERR_ASSIGN(lhs, parse_abstraction(self), ParseResult, ParseResult);
         break;
     }
     case TK_SUB:
@@ -493,20 +431,19 @@ static ParseResult parse_operand(Parser *self) {
             RET_ERR_ASSIGN(argument, parse_expr(self), ParseResult,
                            ParseResult);
 
-            AST lhs_ast =
-                (AST){.tag = AST_APPLICATION,
-                      .value =
-                          {
-                              .application =
-                                  (AST_Application){
-                                      .function = lhs,
-                                      .argument = argument,
-                                  },
-                          },
-                      .span = {
-                          .start = self->ast_arena.buffer[lhs].span.start,
-                          .end = self->ast_arena.buffer[argument].span.end,
-                      }};
+            AST lhs_ast = {.tag = AST_APPLICATION,
+                           .value =
+                               {
+                                   .application =
+                                       {
+                                           .function = lhs,
+                                           .argument = argument,
+                                       },
+                               },
+                           .span = {
+                               .start = self->ast_arena.buffer[lhs].span.start,
+                               .end = self->ast_arena.buffer[argument].span.end,
+                           }};
             lhs = ASTVec_push(&self->ast_arena, lhs_ast);
         }
         if (at(self, TK_LSQUARE)) {
@@ -538,83 +475,6 @@ ParseResult parse_expr(Parser *self) {
     ASTIndex lhs;
     RET_ERR_ASSIGN(lhs, parse_operand(self), ParseResult, ParseResult);
 
-    /*for (;;) {
-        Token *peeked = peek(self);
-        TokenKind op;
-        switch (peeked->kind) {
-        case TK_FNPIPE:
-        case TK_ADD:
-        case TK_SUB:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_MOD:
-        case TK_AND:
-        case TK_OR:
-        case TK_LT:
-        case TK_LEQ:
-        case TK_GT:
-        case TK_GEQ:
-        case TK_EQ:
-        case TK_NEQ:
-            op = peeked->kind;
-            break;
-        case TK_RPAREN:
-        case TK_IN:
-        case TK_COMMA:
-        case TK_EOF:
-            // Cope seethe mald
-            goto DONE;
-        default:
-            return (ParseResult){
-                .tag = RESULT_ERR,
-                .value =
-                    {
-                        .err =
-                            {
-                                .tag = ERROR_UNEXPECTED_TOKEN,
-                                .error =
-                                    {
-                                        .unexpected_token =
-                                            {
-                                                .expected =
-                                                    STR("operator, ')', "
-                                                        "'in', or ','"),
-                                                .got = next(self),
-                                            },
-                                    },
-                            },
-                    },
-            };
-        }
-
-        next(self);
-
-        ASTIndex rhs;
-        RET_ERR_ASSIGN(rhs, parse_expr(self), ParseResult, ParseResult);
-
-        Span span = {self->ast_arena.buffer[lhs].span.start,
-                     self->ast_arena.buffer[rhs].span.end};
-        AST lhs_ast = (AST){
-            .tag = AST_BINARY_OP,
-            .value =
-                {
-                    .binary_op =
-                        {
-                            .op = (AST_BinOp)op,
-                            .lhs = lhs,
-                            .rhs = rhs,
-                        },
-                },
-            .span = span,
-        };
-        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
-    }
-DONE:
-
-    return (ParseResult){
-        .tag = RESULT_OK,
-        .value = {.ok = lhs},
-    }; */
     while (true) {
         Token *peeked = peek(self);
         Token op;

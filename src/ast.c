@@ -131,6 +131,8 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ' ');
         format_ast_node(arena, binop->rhs, buf);
         StringBuf_push(buf, ')');
+        // I hate writing switch statements
+        break;
     }
     case AST_APPLICATION: {
         AST_Application *app = &node->value.application;

@@ -11,7 +11,7 @@ typedef enum {
 #define DEF_RESULT(T, E, name)                                                 \
     typedef struct {                                                           \
         ResultTag tag;                                                         \
-        union name##Union {                                                    \
+        union name##__Union {                                                  \
             T ok;                                                              \
             E err;                                                             \
         } value;                                                               \

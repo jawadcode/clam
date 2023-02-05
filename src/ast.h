@@ -15,14 +15,14 @@ typedef size_t ASTIndex;
 DECL_VEC_HEADER(ASTIndex, AST_List)
 
 // A literal, e.g: 'unit', 'true', '0.123' and '"a string"'
-typedef struct {
-    enum {
+typedef struct AST_Literal {
+    enum AST_LiteralTag {
         LITERAL_UNIT,
         LITERAL_BOOL,
         LITERAL_NUMBER,
         LITERAL_STRING,
     } tag;
-    union {
+    union AST_LiteralUnion {
         void *unit;
         bool boolean;
         double number;
@@ -31,7 +31,7 @@ typedef struct {
 } AST_Literal;
 
 // A singular let binding (variable definition) in 'AST_LetIn'
-typedef struct {
+typedef struct AST_LetBind {
     String ident;
     ASTIndex value;
 } AST_LetBind;
@@ -41,33 +41,33 @@ DECL_VEC_HEADER(AST_LetBind, AST_LetBindVec)
 
 // An expression which is equivalent to 'body', given the variables defined
 // in 'bindings'
-typedef struct {
+typedef struct AST_LetIn {
     AST_LetBindVec bindings;
     ASTIndex body;
     // clang-format on
 } AST_LetIn;
 
 // An anonymous function with an argument 'argument' and a body 'body'
-typedef struct {
+typedef struct AST_Abstraction {
     String argument;
     ASTIndex body;
 } AST_Abstraction;
 
 // An expression where 'function' is called with the argument 'argument'
-typedef struct {
+typedef struct AST_Application {
     ASTIndex function;
     ASTIndex argument;
 } AST_Application;
 
-/*// An expression that when evaluated, prints 'expr', this is built-in because
+// An expression that when evaluated, prints 'expr', this is built-in because
 // I'm lazy
-typedef struct {
+typedef struct AST_Print {
     ASTIndex expr;
-} AST_Print;*/
+} AST_Print;
 
 // An if-else expression, operating on the condition 'condition', with a
 // consequence 'then' and an alternative 'else_'
-typedef struct {
+typedef struct AST_IfElse {
     ASTIndex condition;
     ASTIndex then;
     ASTIndex else_;
@@ -75,13 +75,13 @@ typedef struct {
 
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
-typedef enum {
+typedef enum AST_UnOp {
     AST_UNOP_NOT = 26,
     AST_UNOP_NEGATE = 22,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
-typedef struct {
+typedef struct AST_UnaryOp {
     Span op_span;
     AST_UnOp op;
     ASTIndex operand;
@@ -89,7 +89,7 @@ typedef struct {
 
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
-typedef enum {
+typedef enum AST_BinOp {
     BINOP_FNPIPE = 20,
 
     BINOP_ADD = 21,
@@ -110,7 +110,7 @@ typedef enum {
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'
-typedef struct {
+typedef struct AST_BinaryOp {
     Span op_span;
     AST_BinOp op;
     ASTIndex lhs;
@@ -118,14 +118,14 @@ typedef struct {
 } AST_BinaryOp;
 
 // A list index expression
-typedef struct {
+typedef struct AST_ListIndex {
     ASTIndex list;
     ASTIndex index;
 } AST_ListIndex;
 
 // The *A*bstract *S*yntax *T*ree
-typedef struct {
-    enum {
+typedef struct AST {
+    enum ASTTag {
         AST_LITERAL,
         AST_IDENT,
         AST_LIST,
@@ -138,7 +138,7 @@ typedef struct {
         AST_BINARY_OP,
         AST_LIST_INDEX,
     } tag;
-    union {
+    union ASTUnion {
         AST_Literal literal;
         String ident;
         AST_List list;
@@ -154,12 +154,12 @@ typedef struct {
     Span span;
 } AST;
 
-typedef struct {
+typedef struct SyntaxError_InvalidEscSeq {
     Span string;
     Span escape_sequence;
 } SyntaxError_InvalidEscSeq;
 
-typedef struct {
+typedef struct SyntaxError_UnexpectedToken {
     // 'expected.length' should exclude the null terminator (which should be
     // present)
     String expected;
@@ -167,11 +167,11 @@ typedef struct {
 } SyntaxError_UnexpectedToken;
 
 typedef struct {
-    enum {
+    enum SyntaxErrorTag {
         ERROR_INVALID_ESC_SEQ,
         ERROR_UNEXPECTED_TOKEN,
     } tag;
-    union {
+    union SyntaxErrorUnion {
         SyntaxError_InvalidEscSeq invalid_esc_seq;
         SyntaxError_UnexpectedToken unexpected_token;
     } error;

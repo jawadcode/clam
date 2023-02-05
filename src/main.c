@@ -12,7 +12,7 @@
 
 #define META_CMD(cmd, rest, fallback_label, ...)                               \
     if (strcmp(cmd + 1, rest "\n") == 0) {                                     \
-        __VA_ARGS__                                                            \
+        __VA_ARGS__;                                                           \
         break;                                                                 \
     } else {                                                                   \
         goto fallback_label;                                                   \
@@ -28,11 +28,11 @@ void print_help(void) {
 void run_cmd(const char *cmd) {
     switch (cmd[0]) {
     case 'e':
-        META_CMD(cmd, "xit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0);)
+        META_CMD(cmd, "xit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0))
     case 'h':
-        META_CMD(cmd, "elp", UNKNOWN_COMMAND, print_help();)
+        META_CMD(cmd, "elp", UNKNOWN_COMMAND, print_help())
     case 'q':
-        META_CMD(cmd, "uit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0);)
+        META_CMD(cmd, "uit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0))
     UNKNOWN_COMMAND:
     default:
         fputs("Error: Unknown command ", stderr);
@@ -45,7 +45,7 @@ void run_cmd(const char *cmd) {
 void run(const char *source) {
     Parser parser = new_parser(source);
 
-    puts("Lexer output:");
+    puts("\nLexer Output:");
     while (true) {
         Token token = next_token(&parser.lexer);
         print_token(source, token);
@@ -59,8 +59,9 @@ void run(const char *source) {
     switch (result.tag) {
     case RESULT_OK: {
         StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
+        puts("\nParser Output:");
         StringBuf_print(&sexpr);
-        puts("");
+        putchar('\n');
         break;
     }
     case RESULT_ERR: {
