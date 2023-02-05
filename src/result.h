@@ -8,14 +8,14 @@ typedef enum {
     RESULT_ERR,
 } ResultTag;
 
-#define DEF_RESULT(T, E, name)                                                 \
-    typedef struct {                                                           \
+#define DEF_RESULT(T, E, Name)                                                 \
+    typedef struct Name##Result {                                              \
         ResultTag tag;                                                         \
         union name##__Union {                                                  \
             T ok;                                                              \
             E err;                                                             \
         } value;                                                               \
-    } name##Result
+    } Name##Result
 
 #define RET_ERR(ResultType, result, ReturnType)                                \
     do {                                                                       \

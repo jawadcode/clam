@@ -4,7 +4,7 @@
 #include "memory.h"
 
 #define CREATE_VEC(T, Name)                                                    \
-    typedef struct {                                                           \
+    typedef struct Name {                                                      \
         T *buffer;                                                             \
         size_t capacity;                                                       \
         size_t length;                                                         \
