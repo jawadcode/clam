@@ -66,11 +66,13 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
             StringBuf_push_string(buf, STR(num));
             break;
         }
-        case LITERAL_STRING:
+        case LITERAL_STRING: {
+            StringBuf str = literal->value.string;
             StringBuf_push(buf, '"');
-            StringBuf_push_string(buf, literal->value.string);
+            StringBuf_push_string(buf, (String){str.buffer, str.length});
             StringBuf_push(buf, '"');
             break;
+        }
         }
         break;
     }

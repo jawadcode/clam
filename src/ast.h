@@ -26,7 +26,7 @@ typedef struct AST_Literal {
         void *unit;
         bool boolean;
         double number;
-        String string;
+        StringBuf string;
     } value;
 } AST_Literal;
 
@@ -153,29 +153,6 @@ typedef struct AST {
     } value;
     Span span;
 } AST;
-
-typedef struct SyntaxError_InvalidEscSeq {
-    Span string;
-    Span escape_sequence;
-} SyntaxError_InvalidEscSeq;
-
-typedef struct SyntaxError_UnexpectedToken {
-    // 'expected.length' should exclude the null terminator (which should be
-    // present)
-    String expected;
-    Token got;
-} SyntaxError_UnexpectedToken;
-
-typedef struct {
-    enum SyntaxErrorTag {
-        ERROR_INVALID_ESC_SEQ,
-        ERROR_UNEXPECTED_TOKEN,
-    } tag;
-    union SyntaxErrorUnion {
-        SyntaxError_InvalidEscSeq invalid_esc_seq;
-        SyntaxError_UnexpectedToken unexpected_token;
-    } error;
-} SyntaxError;
 
 // clang-format off
 DECL_VEC_HEADER(AST, ASTVec)

@@ -24,6 +24,7 @@
 #define ASSERT(assertion, message) (void)0
 #endif
 
+// I hate this language and all of its compilers
 #ifdef _MSC_VER
 #define UNREACHABLE                                                            \
     default:                                                                   \
@@ -54,6 +55,8 @@ void String_print(String string);
 void String_write(String string, FILE *file);
 
 DECL_VEC_HEADER(char, StringBuf)
+
+StringBuf StringBuf_with_capacity(size_t cap);
 
 void StringBuf_push_string(StringBuf *buf, String string);
 

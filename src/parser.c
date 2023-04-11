@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "result.h"
 #include "vec.h"
+#include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -16,7 +17,7 @@ DEF_VEC_T(String, StringVec)
 DEF_VEC(AST_LetBind, AST_LetBindVec)
 DEF_VEC(ASTIndex, AST_List)
 
-DEF_RESULT(String, SyntaxError, ParseString);
+DEF_RESULT(StringBuf, SyntaxError, ParseString);
 DEF_RESULT(Token, SyntaxError, Token);
 DEF_RESULT(AST, SyntaxError, AST);
 
@@ -42,9 +43,10 @@ static const TokenKind
         TK_NEQ,    TK_LPAREN,  TK_LSQUARE, TK_LET, TK_FUN, TK_SUB, TK_NOT,
         TK_RPAREN, TK_RSQUARE, TK_COMMA,   TK_IN,  TK_EOF};
 
-Parser new_parser(const char *source) {
+Parser new_parser(const char *file_name, const char *source) {
     // clang-format on
     return (Parser){
+        .file_name = file_name,
         .source = source,
         .lexer = new_lexer(source),
         .ast_arena = ASTVec_new(),
@@ -87,32 +89,31 @@ static double parse_number(Parser *self, Span span) {
 static ParseStringResult parse_string(Parser *self, Span span) {
     const char *str = self->lexer.source + span.start;
 
-    // Malloc enough space for the contents (i.e. minus the start and end
+    // Alloc enough space for the contents (i.e. minus the start and end
     // quotes, plus the null terminator) of the string in the source, which
     // means we might allocate in excess if has escape codes, but who cares
-    char *buffer = malloc(span.end - span.start - 1);
+    StringBuf buffer = StringBuf_new();
+
     size_t index = 0;
     bool escaped = false;
-
-    // Skips the opening quote
     while (str[++index] != '"' || (escaped && str[index] == '"')) {
         if (escaped) {
             switch (str[index]) {
             case 'n':
-                buffer[index] = '\n';
+                StringBuf_push(&buffer, '\n');
                 break;
             case 'r':
-                buffer[index] = '\r';
+                StringBuf_push(&buffer, '\r');
                 break;
             case 't':
-                buffer[index] = '\t';
+                StringBuf_push(&buffer, '\t');
                 break;
             case '0':
-                buffer[index] = '\0';
+                StringBuf_push(&buffer, '\0');
                 break;
             case '"':
             case '\\':
-                buffer[index] = str[index];
+                StringBuf_push(&buffer, str[index]);
                 break;
             default: {
                 size_t start = str + index - self->lexer.source - 1;
@@ -139,15 +140,13 @@ static ParseStringResult parse_string(Parser *self, Span span) {
         } else if (str[index] == '\\') {
             escaped = true;
         } else {
-            buffer[index] = str[index];
+            StringBuf_push(&buffer, str[index]);
+            buffer.buffer[index] = str[index];
         }
     }
-    buffer = (char *)realloc(buffer, sizeof(char) * (index + 1));
-    buffer[index] = '\0';
-
     return (ParseStringResult){
         .tag = RESULT_OK,
-        .value = {.ok = {.buffer = buffer, .length = strlen(buffer)}},
+        .value = {.ok = buffer},
     };
 }
 
@@ -170,7 +169,7 @@ static ASTResult parse_literal(Parser *self) {
                             {.number = parse_number(self, current.span)}};
         break;
     case TK_STRING: {
-        String string;
+        StringBuf string;
         RET_ERR_ASSIGN(string, parse_string(self, current.span),
                        ParseStringResult, ASTResult);
 
@@ -214,6 +213,13 @@ static AST parse_ident(Parser *self) {
         .span = current.span};
 }
 
+static inline Span current_span(Parser *self) {
+    return (Span){
+        .start = self->lexer.start - self->lexer.source,
+        .end = self->lexer.current - self->lexer.source,
+    };
+}
+
 static TokenResult expect(Parser *self, TokenKind kind) {
     Token token = next(self);
     String kind_string = token_kind_to_string(kind);
@@ -222,9 +228,10 @@ static TokenResult expect(Parser *self, TokenKind kind) {
         return (TokenResult){
             .tag = RESULT_ERR,
             .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
-                              .error = {.unexpected_token = {.expected =
-                                                                 kind_string,
-                                                             .got = token}}}},
+                              .error = {.unexpected_token =
+                                            {.expected = kind_string,
+                                             .got = token,
+                                             .span = current_span(self)}}}},
         };
     } else {
         return (TokenResult){
@@ -250,7 +257,6 @@ static bool at_any(Parser *self, const TokenKind *list, size_t length) {
 
 static ParseResult parse_abstraction(Parser *self) {
     Token fun_token = next(self);
-
     StringVec args = StringVec_new();
     Token first_param_token;
     RET_ERR_ASSIGN(first_param_token, expect(self, TK_IDENT), TokenResult,
@@ -291,7 +297,7 @@ static ParseResult parse_abstraction(Parser *self) {
 
 static ASTResult parse_let_binding(Parser *self) {
     Span span = (Span){.start = next(self).span.start};
-    AST_LetBindVec bindings = AST_LetBindVec_new();
+    AST_LetBindVec binds = AST_LetBindVec_new();
     while (at(self, TK_IDENT)) {
         Span ident_span = next(self).span;
         String ident = {.buffer = self->source + ident_span.start,
@@ -299,7 +305,7 @@ static ASTResult parse_let_binding(Parser *self) {
         RET_ERR(TokenResult, expect(self, TK_ASSIGN), ASTResult);
         ASTIndex value;
         RET_ERR_ASSIGN(value, parse_expr(self), ParseResult, ASTResult);
-        AST_LetBindVec_push(&bindings, (AST_LetBind){ident, value});
+        AST_LetBindVec_push(&binds, (AST_LetBind){ident, value});
         Token *peeked = peek(self);
         if (peeked->kind == TK_COMMA) {
             next(self);
@@ -311,7 +317,7 @@ static ASTResult parse_let_binding(Parser *self) {
     span.end = self->ast_arena.buffer[body].span.end;
     AST let_in = (AST){
         .tag = AST_LET_IN,
-        .value = {.let_in = (AST_LetIn){bindings, body}},
+        .value = {.let_in = (AST_LetIn){binds, body}},
         .span = span,
     };
     return (ASTResult){.tag = RESULT_OK, .value = {.ok = let_in}};
@@ -333,7 +339,7 @@ static ASTResult parse_unop(Parser *self) {
 static ASTResult parse_list(Parser *self) {
     Span list_span = (Span){.start = next(self).span.start};
     AST_List items = AST_List_new();
-    while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RPAREN}, 2)) {
+    while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RSQUARE}, 2)) {
         ASTIndex item;
         RET_ERR_ASSIGN(item, parse_expr(self), ParseResult, ASTResult);
         AST_List_push(&items, item);
@@ -414,6 +420,7 @@ static ParseResult parse_operand(Parser *self) {
         break;
     }
     default: {
+        next(self);
         return (ParseResult){
             .tag = RESULT_ERR,
             .value = {
@@ -422,6 +429,7 @@ static ParseResult parse_operand(Parser *self) {
                     .error = {.unexpected_token = (SyntaxError_UnexpectedToken){
                                   .expected = STR("expression"),
                                   .got = next(self),
+                                  .span = current_span(self),
                               }}}}};
     }
     }
@@ -457,12 +465,14 @@ static ParseResult parse_operand(Parser *self) {
         if (peek(self)->kind == TK_LSQUARE) {
             continue;
         } else {
+            next(self);
             return (ParseResult){
                 .tag = RESULT_ERR,
                 .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
                                   .error = {.unexpected_token = {
-                                                .expected = STR("expression,"),
-                                                .got = next(self)}}}}};
+                                                .expected = STR("expression"),
+                                                .got = next(self),
+                                                .span = current_span(self)}}}}};
         }
     }
     return (ParseResult){.tag = RESULT_OK,
@@ -484,6 +494,7 @@ ParseResult parse_expr(Parser *self) {
                       TK_EXPR_TERMINATORS_LEN)) {
             break;
         } else {
+            next(self);
             return (ParseResult){
                 .tag = RESULT_ERR,
                 .value = {
@@ -492,7 +503,8 @@ ParseResult parse_expr(Parser *self) {
                         .error = {.unexpected_token = {
                                       .expected = STR(
                                           "operator or expression terminator"),
-                                      .got = next(self)}}}}};
+                                      .got = next(self),
+                                      .span = current_span(self)}}}}};
         }
 
         ASTIndex rhs;
@@ -509,4 +521,135 @@ ParseResult parse_expr(Parser *self) {
         .tag = RESULT_OK,
         .value = {.ok = lhs},
     };
+}
+
+void Parser_free(Parser *self) {
+    for (size_t index = 0; index < self->ast_arena.length; index++) {
+        AST item = self->ast_arena.buffer[index];
+        switch (item.tag) {
+        case AST_LIST:
+            AST_List_free(&item.value.list);
+        case AST_LET_IN:
+            AST_LetBindVec_free(&item.value.let_in.bindings);
+        case AST_LITERAL:
+        case AST_IDENT:
+        case AST_ABSTRACTION:
+        case AST_APPLICATION:
+        case AST_IF_ELSE:
+        case AST_UNARY_OP:
+        case AST_BINARY_OP:
+        case AST_LIST_INDEX:
+            break;
+        }
+    }
+
+    ASTVec_free(&self->ast_arena);
+}
+
+typedef struct {
+    size_t line_num;
+    size_t line_start;
+    size_t line_end;
+} LineInfo;
+
+static LineInfo get_line_nums(String source, size_t span_start) {
+    LineInfo result = {.line_num = 1, .line_start = 0};
+
+    bool on_line = false;
+    for (size_t i = 0; i < source.length; i++) {
+        char c = source.buffer[i];
+        if (i == span_start)
+            on_line = true;
+        else if (c == '\n') {
+            if (on_line) {
+                result.line_end = i;
+                break;
+            }
+            result.line_num++;
+            result.line_start = i + 1;
+        }
+    }
+
+    return result;
+}
+
+static inline void write_repeat(char c, size_t n, FILE *stream) {
+    for (size_t i = 0; i < n; i++)
+        fputc(c, stream);
+}
+
+static inline void write_num(size_t n, FILE *stream) {
+    if (n / 10)
+        write_num(n / 10, stream);
+    fputc(n % 10 + '0', stream);
+}
+
+void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
+    fputs("\x1b[31;1mError\x1b[0m: ", stream);
+    Span span;
+    switch (error.tag) {
+    case ERROR_INVALID_ESC_SEQ:
+        fputs("invalid escape sequence\n", stream);
+        span = error.error.invalid_esc_seq.escape_sequence;
+        break;
+    case ERROR_UNEXPECTED_TOKEN:
+        fputs("unexpected token\n", stream);
+        span = error.error.unexpected_token.span;
+        break;
+    }
+    LineInfo line_info = get_line_nums(
+        (String){.buffer = self->source, .length = strlen(self->source)},
+        span.start);
+    size_t num_digits = floor(log10((double)line_info.line_num) + 1.0);
+    write_repeat(' ', num_digits + 2, stream);
+    fputs("\x1b[37m┌─[\x1b[0m", stream);
+    String_write(
+        (String){.buffer = self->file_name, .length = strlen(self->file_name)},
+        stream);
+    fputc(':', stream);
+    write_num(line_info.line_num, stream);
+    fputc(':', stream);
+    write_num(span.start - line_info.line_start, stream);
+    fputs("\x1b[37m]\n", stream);
+    write_repeat(' ', num_digits + 2, stream);
+    fputs("│\n", stream);
+    fputc(' ', stream);
+    write_num(line_info.line_num, stream);
+    fputs(" │ ", stream);
+    String_write((String){.buffer = self->source + line_info.line_start,
+                          .length = span.start - line_info.line_start},
+                 stream);
+    fputs("\x1b[0m", stream);
+    String_write((String){.buffer = self->source + span.start,
+                          .length = span.end - span.start},
+                 stream);
+    fputs("\x1b[37m", stream);
+    String_write((String){.buffer = self->source + span.end,
+                          .length = line_info.line_end - span.end},
+                 stream);
+    fputc('\n', stream);
+    write_repeat(' ', num_digits + 4 + span.start - line_info.line_start,
+                 stream);
+    fputs("\x1b[0m", stream);
+    write_repeat('^', span.end - span.start, stream);
+    fputc('\n', stream);
+    write_repeat(' ', num_digits + 4 + span.start - line_info.line_start,
+                 stream);
+    switch (error.tag) {
+    case ERROR_INVALID_ESC_SEQ:
+        fputs("invalid escape sequence '\\", stream);
+        fputc(*(self->source + span.start), stream);
+        fputc('\'', stream);
+        break;
+    case ERROR_UNEXPECTED_TOKEN: {
+        SyntaxError_UnexpectedToken ut = error.error.unexpected_token;
+        fputs("expected ", stream);
+        String_write(ut.expected, stream);
+        fputs(", got '", stream);
+        String_write(token_to_string(&self->lexer, ut.got), stream);
+        fputc('\'', stream);
+        break;
+    }
+    }
+    fputc('\n', stream);
 }

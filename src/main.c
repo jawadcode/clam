@@ -10,13 +10,7 @@
 #include "parser.h"
 #include "vec.h"
 
-#define META_CMD(cmd, rest, fallback_label, ...)                               \
-    if (strcmp(cmd + 1, rest "\n") == 0) {                                     \
-        __VA_ARGS__;                                                           \
-        break;                                                                 \
-    } else {                                                                   \
-        goto fallback_label;                                                   \
-    }
+#define MATCH_REST(cmd, rest) strcmp((cmd) + 1, rest "\n") == 0
 
 void print_help(void) {
     puts("Commands:\n"
@@ -28,11 +22,23 @@ void print_help(void) {
 void run_cmd(const char *cmd) {
     switch (cmd[0]) {
     case 'e':
-        META_CMD(cmd, "xit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0))
+        if (MATCH_REST(cmd, "xit")) {
+            puts("Bye bye...\n");
+            exit(0);
+        } else
+            goto UNKNOWN_COMMAND;
     case 'h':
-        META_CMD(cmd, "elp", UNKNOWN_COMMAND, print_help())
+        if (MATCH_REST(cmd, "elp")) {
+            print_help();
+            break;
+        } else
+            goto UNKNOWN_COMMAND;
     case 'q':
-        META_CMD(cmd, "uit", UNKNOWN_COMMAND, puts("Bye bye...\n"), exit(0))
+        if (MATCH_REST(cmd, "uit")) {
+            puts("Bye bye...\n");
+            exit(0);
+        } else
+            goto UNKNOWN_COMMAND;
     UNKNOWN_COMMAND:
     default:
         fputs("Error: Unknown command ", stderr);
@@ -43,18 +49,18 @@ void run_cmd(const char *cmd) {
 }
 
 void run(const char *source) {
-    Parser parser = new_parser(source);
+    Parser parser = new_parser("stdin", source);
 
-    puts("\nLexer Output:");
-    while (true) {
-        Token token = next_token(&parser.lexer);
-        print_token(source, token);
-        if (token.kind == TK_EOF)
-            break;
-    }
+    /*  puts("\nLexer Output:");
+        while (true) {
+            Token token = next_token(&parser.lexer);
+            print_token(source, token);
+            if (token.kind == TK_EOF)
+                break;
+        }
 
-    // Rewind the lexer
-    parser.lexer = new_lexer(source);
+        // Rewind the lexer
+        parser.lexer = new_lexer(source); */
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
@@ -62,37 +68,17 @@ void run(const char *source) {
         puts("\nParser Output:");
         StringBuf_print(&sexpr);
         putchar('\n');
+        StringBuf_free(&sexpr);
         break;
     }
     case RESULT_ERR: {
         SyntaxError error = result.value.err;
-        switch (error.tag) {
-        case ERROR_INVALID_ESC_SEQ: {
-            SyntaxError_InvalidEscSeq err = error.error.invalid_esc_seq;
-            puts("SyntaxError: Invalid escape sequence\nstring:");
-            String_print((String){
-                .buffer = source + err.string.start,
-                .length = err.string.end - err.string.start,
-            });
-            puts("\nescape sequence:");
-            String_print((String){
-                .buffer = source + err.escape_sequence.start,
-                .length = err.string.end - err.string.start,
-            });
-            break;
-        }
-        case ERROR_UNEXPECTED_TOKEN: {
-            SyntaxError_UnexpectedToken err = error.error.unexpected_token;
-            puts("SyntaxError: Unexpected token\nexpected:");
-            puts(err.expected.buffer);
-            puts("got:");
-            print_token(source, err.got);
-            break;
-        }
-        }
+        SyntaxError_print_diag(&parser, error, stderr);
         break;
     }
     }
+
+    Parser_free(&parser);
 }
 
 void repl(void) {
