@@ -1,110 +1,38 @@
 [
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/ast.c.o",
-      "src/ast.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/ast.c",
-    "output": "/home/jawad/langdev/clam/build/src/ast.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_ast.c.o -MF clam.p/src_ast.c.o.d -o clam.p/src_ast.c.o -c ../src/ast.c",
+    "file": "../src/ast.c",
+    "output": "clam.p/src_ast.c.o"
   },
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/parser.c.o",
-      "src/parser.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/parser.c",
-    "output": "/home/jawad/langdev/clam/build/src/parser.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_common.c.o -MF clam.p/src_common.c.o.d -o clam.p/src_common.c.o -c ../src/common.c",
+    "file": "../src/common.c",
+    "output": "clam.p/src_common.c.o"
   },
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/memory.c.o",
-      "src/memory.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/memory.c",
-    "output": "/home/jawad/langdev/clam/build/src/memory.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_lexer.c.o -MF clam.p/src_lexer.c.o.d -o clam.p/src_lexer.c.o -c ../src/lexer.c",
+    "file": "../src/lexer.c",
+    "output": "clam.p/src_lexer.c.o"
   },
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/lexer.c.o",
-      "src/lexer.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/lexer.c",
-    "output": "/home/jawad/langdev/clam/build/src/lexer.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_main.c.o -MF clam.p/src_main.c.o.d -o clam.p/src_main.c.o -c ../src/main.c",
+    "file": "../src/main.c",
+    "output": "clam.p/src_main.c.o"
   },
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/common.c.o",
-      "src/common.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/common.c",
-    "output": "/home/jawad/langdev/clam/build/src/common.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_memory.c.o -MF clam.p/src_memory.c.o.d -o clam.p/src_memory.c.o -c ../src/memory.c",
+    "file": "../src/memory.c",
+    "output": "clam.p/src_memory.c.o"
   },
   {
-    "arguments": [
-      "/usr/bin/clang",
-      "-I./src",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-g",
-      "-fsanitize=address",
-      "-c",
-      "-o",
-      "build/./src/main.c.o",
-      "src/main.c"
-    ],
-    "directory": "/home/jawad/langdev/clam",
-    "file": "/home/jawad/langdev/clam/src/main.c",
-    "output": "/home/jawad/langdev/clam/build/src/main.c.o"
+    "directory": "/home/jawad/Desktop/langdev/clam/builddir",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_parser.c.o -MF clam.p/src_parser.c.o.d -o clam.p/src_parser.c.o -c ../src/parser.c",
+    "file": "../src/parser.c",
+    "output": "clam.p/src_parser.c.o"
   }
 ]
