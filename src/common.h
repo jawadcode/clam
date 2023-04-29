@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_COMMON_H
-#define LLAMBDA_COMMON_H
+#ifndef CLAM_COMMON_H
+#define CLAM_COMMON_H
 
 #include <stdbool.h>
 #include <stdio.h>

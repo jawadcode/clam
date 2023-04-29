@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_MEMORY_H
-#define LLAMBDA_MEMORY_H
+#ifndef CLAM_MEMORY_H
+#define CLAM_MEMORY_H
 
 #include <stdlib.h>
 

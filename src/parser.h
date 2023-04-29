@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_PARSER_H
-#define LLAMBDA_PARSER_H
+#ifndef CLAM_PARSER_H
+#define CLAM_PARSER_H
 
 #include "ast.h"
 #include "lexer.h"

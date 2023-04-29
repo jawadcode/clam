@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_AST_H
-#define LLAMBDA_AST_H
+#ifndef CLAM_AST_H
+#define CLAM_AST_H
 
 #include "common.h"
 #include "lexer.h"

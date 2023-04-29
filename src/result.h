@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_RESULT_H
-#define LLAMBDA_RESULT_H
+#ifndef CLAM_RESULT_H
+#define CLAM_RESULT_H
 
 #include <stdio.h>
 

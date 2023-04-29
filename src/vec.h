@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_VEC_H
-#define LLAMBDA_VEC_H
+#ifndef CLAM_VEC_H
+#define CLAM_VEC_H
 
 #include "memory.h"
 

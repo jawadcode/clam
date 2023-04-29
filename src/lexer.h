@@ -1,5 +1,5 @@
-#ifndef LLAMBDA_LEXER_H
-#define LLAMBDA_LEXER_H
+#ifndef CLAM_LEXER_H
+#define CLAM_LEXER_H
 
 #include "common.h"
 #include "vec.h"
