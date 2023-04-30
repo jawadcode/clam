@@ -50,17 +50,6 @@ void run_cmd(const char *cmd) {
 
 void run(const char *source) {
     Parser parser = new_parser("stdin", source);
-
-    /*  puts("\nLexer Output:");
-        while (true) {
-            Token token = next_token(&parser.lexer);
-            print_token(source, token);
-            if (token.kind == TK_EOF)
-                break;
-        }
-
-        // Rewind the lexer
-        parser.lexer = new_lexer(source); */
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
@@ -84,7 +73,7 @@ void run(const char *source) {
 void repl(void) {
     char *buffer;
     size_t length;
-    ssize_t len_chars;
+    size_t len_chars;
 
     while (true) {
         fputs("$ ", stdout);

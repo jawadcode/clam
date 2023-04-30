@@ -1,9 +1,11 @@
-#include "lexer.h"
+#include <alloca.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "lexer.h"
 
 // Create a new 'Lexer' which lexes 'source'
 inline Lexer new_lexer(const char *source) {

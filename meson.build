@@ -1,4 +1,11 @@
-project('clam', 'c')
+project(
+  'clam',
+  'c',
+  default_options : [
+    'warning_level=3',
+    'c_std=c2x'
+  ]
+)
 
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
