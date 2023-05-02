@@ -17,27 +17,30 @@ typedef enum {
         } value;                                                               \
     } Name##Result
 
-#define RET_ERR(result)                                                        \
+#define RET_ERR(ResultType, result)                                            \
     do {                                                                       \
-        if (result.tag == RESULT_ERR) {                                        \
-            error = result.value.err;                                          \
+        ResultType res = result;                                               \
+        if (res.tag == RESULT_ERR) {                                           \
+            error = res.value.err;                                             \
             goto FAILURE;                                                      \
         }                                                                      \
     } while (0)
 
-#define RET_ERR_ASSIGN(ident, result)                                          \
+#define RET_ERR_ASSIGN(ident, ResultType, result)                              \
     do {                                                                       \
-        if (result.tag == RESULT_ERR) {                                        \
-            error = result.value.err;                                          \
+        ResultType res = result;                                               \
+        if (res.tag == RESULT_ERR) {                                           \
+            error = res.value.err;                                             \
             goto FAILURE;                                                      \
         } else                                                                 \
-            ident = result.value.ok;                                           \
+            ident = res.value.ok;                                              \
     } while (0)
 
-#define RET_OK(result)                                                         \
+#define RET_OK(ResultType, result)                                             \
     do {                                                                       \
-        if (result.tag == RESULT_ERR) {                                        \
-            error = result.value.ok;                                           \
+        ResultType res = result;                                               \
+        if (res.tag == RESULT_ERR) {                                           \
+            error = res.value.ok;                                              \
             goto FAILURE;                                                      \
         }                                                                      \
     } while (0)

@@ -14,14 +14,6 @@ void String_write(String string, FILE *file) {
 
 DEF_VEC(char, StringBuf)
 
-StringBuf StringBuf_with_capacity(size_t cap) {
-    return (StringBuf){
-        .buffer = malloc(cap),
-        .length = 0,
-        .capacity = cap,
-    };
-}
-
 void StringBuf_push_string(StringBuf *buf, String string) {
     size_t old_length = buf->length;
     size_t new_length = buf->length + string.length;

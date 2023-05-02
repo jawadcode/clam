@@ -80,9 +80,9 @@ typedef struct {
 
 // Stores lexer state
 typedef struct {
-    const char *source;
-    const char *start;
-    const char *current;
+    String source;
+    size_t start;
+    size_t current;
     MaybeToken peeked;
 } Lexer;
 
@@ -90,7 +90,7 @@ DECL_VEC_HEADER(Token, TokenVec)
 // clang-format off
 
 // Create a new lexer that operates on `source`
-Lexer new_lexer(const char *source);
+Lexer new_lexer(const String source);
 // clang-format on
 
 // Get the current peeked token
@@ -103,9 +103,9 @@ Token next_token(Lexer *lexer);
 String token_kind_to_string(TokenKind kind);
 
 // Get the token as a slice of the source string
-String token_to_string(Lexer *lexer, Token token);
+String token_to_string(Lexer lexer, Token token);
 
 // Print a token using printf
-void print_token(const char *source, Token token);
+void print_token(const String source, Token token);
 
 #endif

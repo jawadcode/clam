@@ -50,13 +50,11 @@ typedef struct {
 #define STR(x)                                                                 \
     (String) { .buffer = x, .length = sizeof(x) - 1 }
 
-void String_print(String string);
+void String_print(const String string);
 
 void String_write(String string, FILE *file);
 
 DECL_VEC_HEADER(char, StringBuf)
-
-StringBuf StringBuf_with_capacity(size_t cap);
 
 void StringBuf_push_string(StringBuf *buf, String string);
 

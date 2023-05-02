@@ -10,14 +10,13 @@
 // Stores parser state
 typedef struct {
     const char *file_name;
-    const char *source;
-    size_t source_len;
+    const String source;
     Lexer lexer;
     ASTVec ast_arena;
 } Parser;
 
 // Creates a new parser that operates on 'source'
-Parser new_parser(const char *file_name, const char *source, size_t source_len);
+Parser new_parser(const char *file_name, const String source);
 
 typedef struct SyntaxError_InvalidEscSeq {
     Span string;

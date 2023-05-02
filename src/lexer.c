@@ -8,11 +8,11 @@
 #include "lexer.h"
 
 // Create a new 'Lexer' which lexes 'source'
-inline Lexer new_lexer(const char *source) {
+inline Lexer new_lexer(const String source) {
     return (Lexer){
         .source = source,
-        .start = source,
-        .current = source,
+        .start = 0,
+        .current = 0,
         .peeked = {MAYBE_NONE, {.none = NULL}},
     };
 }
@@ -23,23 +23,33 @@ static inline bool is_ident(char c) {
 
 static inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-static inline bool is_at_end(Lexer *lexer) { return *lexer->current == '\0'; }
+static inline char next_char(Lexer *lexer) {
+    return lexer->source.buffer[lexer->current];
+}
 
-static inline char peek(Lexer *lexer) { return *lexer->current; }
+static inline bool is_at_end(Lexer *lexer) {
+    return (size_t)lexer->current + 1 == lexer->source.length;
+}
+
+static inline char peek(Lexer *lexer) {
+    return lexer->source.buffer[lexer->current];
+}
 
 static inline void skip(Lexer *lexer) { lexer->current++; }
 
-static inline char advance(Lexer *lexer) { return *(lexer->current++); }
+static inline char advance(Lexer *lexer) {
+    return lexer->source.buffer[lexer->current++];
+}
 
 static inline char safe_advance(Lexer *lexer) {
     if (is_at_end(lexer))
         return '\0';
     else
-        return lexer->current[1];
+        return lexer->source.buffer[lexer->current + 1];
 }
 
 static inline bool match(Lexer *lexer, char expected) {
-    if (is_at_end(lexer) || *lexer->current != expected)
+    if (is_at_end(lexer) || next_char(lexer) != expected)
         return false;
     else {
         skip(lexer);
@@ -67,24 +77,24 @@ void skip_whitespace(Lexer *lexer) {
     }
 }
 
-static TokenKind check_kw(Lexer *lexer, int start, int length, const char *rest,
-                          TokenKind kind) {
+static TokenKind check_kw(Lexer *lexer, size_t start, size_t length,
+                          const char *rest, TokenKind kind) {
     if (lexer->current - lexer->start == start + length &&
-        memcmp(lexer->start + start, rest, length) == 0)
+        memcmp(lexer->source.buffer + lexer->start + start, rest, length) == 0)
         return kind;
     else
         return TK_IDENT;
 }
 
 static TokenKind ident_type(Lexer *lexer) {
-    switch (lexer->start[0]) {
+    switch (lexer->source.buffer[lexer->start]) {
     case 'a':
         return check_kw(lexer, 1, 2, "nd", TK_AND);
     case 'e':
         return check_kw(lexer, 1, 3, "lse", TK_ELSE);
     case 'f':
         if (lexer->current - lexer->start > 1) {
-            switch (lexer->start[1]) {
+            switch (lexer->source.buffer[lexer->start + 1]) {
             case 'a':
                 return check_kw(lexer, 2, 3, "lse", TK_FALSE);
             case 'u':
@@ -214,6 +224,7 @@ static inline MaybeToken take(MaybeToken *self) {
     return temp;
 }
 
+// TODO: Remove the need for a null terminator at the end of 'lexer->source'
 Token next_token(Lexer *lexer) {
     MaybeToken peeked = take(&lexer->peeked);
     switch (peeked.tag) {
@@ -225,8 +236,8 @@ Token next_token(Lexer *lexer) {
         lexer->start = lexer->current;
         return (Token){.kind = next_kind(lexer),
                        .span = {
-                           .start = lexer->start - lexer->source,
-                           .end = lexer->current - lexer->source,
+                           .start = lexer->start,
+                           .end = lexer->current,
                        }};
     }
     }
@@ -322,18 +333,18 @@ String token_kind_to_string(TokenKind kind) {
     }
 }
 
-String token_to_string(Lexer *lexer, Token token) {
+String token_to_string(Lexer lexer, Token token) {
     return (String){
-        .buffer = lexer->source + token.span.start,
+        .buffer = lexer.source.buffer + token.span.start,
         .length = token.span.end - token.span.start,
     };
 }
 
-void print_token(const char *source, Token token) {
+void print_token(const String source, Token token) {
     String kind = token_kind_to_string(token.kind);
 
     size_t length = token.span.end - token.span.start;
-    const char *start = source + token.span.start;
+    const char *start = source.buffer + token.span.start;
 
     char *text = (char *)alloca((length + 1) * sizeof(char));
     text = (char *)memcpy(text, start, length);

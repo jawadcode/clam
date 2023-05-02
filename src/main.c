@@ -10,31 +10,36 @@
 #include "parser.h"
 #include "vec.h"
 
-#define MATCH_REST(cmd, rest) strcmp((cmd) + 1, rest "\n") == 0
+// Ensure cmd.length > 2
+static inline bool match_rest(const String cmd, const char *rest) {
+    // not using 'memcmp' because we want to stop at the null-terminator in
+    // 'rest'
+    return strncmp(cmd.buffer + 1, rest, cmd.length - 1) == 0;
+}
 
 void print_help(void) {
-    puts("Commands:\n"
+    puts("\nCommands:\n"
          "  :exit - Exit the REPL\n"
          "  :help - Display this help message\n"
          "  :quit - Quit the REPL\n");
 }
 
-void run_cmd(const char *cmd) {
-    switch (cmd[0]) {
+void run_cmd(const String cmd) {
+    switch (cmd.buffer[0]) {
     case 'e':
-        if (MATCH_REST(cmd, "xit")) {
+        if (match_rest(cmd, "xit")) {
             puts("Bye bye...\n");
             exit(0);
         } else
             goto UNKNOWN_COMMAND;
     case 'h':
-        if (MATCH_REST(cmd, "elp")) {
+        if (match_rest(cmd, "elp")) {
             print_help();
             break;
         } else
             goto UNKNOWN_COMMAND;
     case 'q':
-        if (MATCH_REST(cmd, "uit")) {
+        if (match_rest(cmd, "uit")) {
             puts("Bye bye...\n");
             exit(0);
         } else
@@ -42,14 +47,14 @@ void run_cmd(const char *cmd) {
     UNKNOWN_COMMAND:
     default:
         fputs("Error: Unknown command ", stderr);
-        puts(cmd);
+        String_print(cmd);
         print_help();
         break;
     }
 }
 
-void run(const char *source, size_t source_len) {
-    Parser parser = new_parser("stdin", source, source_len);
+void run(const String source) {
+    Parser parser = new_parser("stdin", source);
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
@@ -77,6 +82,7 @@ StringBuf read_line() {
         StringBuf_push(&str, c);
         c = fgetc(stdin);
     }
+    StringBuf_push(&str, '\0');
     return str;
 }
 
@@ -85,10 +91,11 @@ void repl(void) {
         fputs("$ ", stdout);
         fflush(stdout);
         StringBuf line = read_line();
-        if (line.length >= 1 && line.buffer[0] == ':') {
-            run_cmd(line.buffer + 1);
+        if (line.length > 2 && line.buffer[0] == ':') {
+            run_cmd(
+                (String){.buffer = line.buffer + 1, .length = line.length - 1});
         } else {
-            run(line.buffer, line.length);
+            run((String){.buffer = line.buffer, .length = line.length});
         }
         StringBuf_free(&line);
     }
@@ -111,7 +118,7 @@ void run_file(const char *path) {
     buffer[bytes_read] = '\0';
 
     fclose(file);
-    run(buffer, file_size);
+    run((String){.buffer = buffer, .length = file_size});
     free(buffer);
 }
 
