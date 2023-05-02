@@ -48,14 +48,14 @@ void run_cmd(const char *cmd) {
     }
 }
 
-void run(const char *source) {
-    Parser parser = new_parser("stdin", source);
+void run(const char *source, size_t source_len) {
+    Parser parser = new_parser("stdin", source, source_len);
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
         StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
         puts("\nParser Output:");
-        StringBuf_print(&sexpr);
+        StringBuf_print(sexpr);
         putchar('\n');
         StringBuf_free(&sexpr);
         break;
@@ -70,22 +70,27 @@ void run(const char *source) {
     Parser_free(&parser);
 }
 
-void repl(void) {
-    char *buffer;
-    size_t length;
-    size_t len_chars;
+StringBuf read_line() {
+    StringBuf str = StringBuf_new();
+    char c = fgetc(stdin);
+    while (c != '\n' && c != EOF) {
+        StringBuf_push(&str, c);
+        c = fgetc(stdin);
+    }
+    return str;
+}
 
+void repl(void) {
     while (true) {
         fputs("$ ", stdout);
         fflush(stdout);
-        buffer = NULL;
-        len_chars = getline(&buffer, &length, stdin);
-        if (len_chars >= 1 && buffer[0] == ':') {
-            run_cmd(buffer + 1);
+        StringBuf line = read_line();
+        if (line.length >= 1 && line.buffer[0] == ':') {
+            run_cmd(line.buffer + 1);
         } else {
-            run(buffer);
+            run(line.buffer, line.length);
         }
-        free(buffer);
+        StringBuf_free(&line);
     }
 }
 
@@ -106,7 +111,7 @@ void run_file(const char *path) {
     buffer[bytes_read] = '\0';
 
     fclose(file);
-    run(buffer);
+    run(buffer, file_size);
     free(buffer);
 }
 

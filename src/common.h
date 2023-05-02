@@ -60,7 +60,7 @@ StringBuf StringBuf_with_capacity(size_t cap);
 
 void StringBuf_push_string(StringBuf *buf, String string);
 
-void StringBuf_print(StringBuf *buf);
+void StringBuf_print(StringBuf buf);
 
 typedef struct {
     size_t start;

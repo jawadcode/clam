@@ -24,7 +24,7 @@
 #define VEC_PUSH(T, Name)                                                      \
     size_t Name##_push(Name *array, T value) {                                 \
         if (array->capacity < array->length + 1) {                             \
-            int old_capacity = array->capacity;                                \
+            size_t old_capacity = array->capacity;                             \
             array->capacity = old_capacity < 8 ? 8 : old_capacity * 2;         \
             array->buffer =                                                    \
                 (T *)reallocate(array->buffer, sizeof(T) * array->capacity);   \

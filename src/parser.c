@@ -43,11 +43,13 @@ static const TokenKind
         TK_NEQ,    TK_LPAREN,  TK_LSQUARE, TK_LET, TK_FUN, TK_SUB, TK_NOT,
         TK_RPAREN, TK_RSQUARE, TK_COMMA,   TK_IN,  TK_EOF};
 
-Parser new_parser(const char *file_name, const char *source) {
+Parser new_parser(const char *file_name, const char *source,
+                  size_t source_len) {
     // clang-format on
     return (Parser){
         .file_name = file_name,
         .source = source,
+        .source_len = source_len,
         .lexer = new_lexer(source),
         .ast_arena = ASTVec_new(),
     };
@@ -620,7 +622,7 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
         break;
     }
     LineInfo line_info = get_line_nums(
-        (String){.buffer = self->source, .length = strlen(self->source)},
+        (String){.buffer = self->source, .length = self->source_len},
         span.start);
     size_t num_digits = floor(log10((double)line_info.line_num) + 1.0);
     write_repeat(' ', num_digits + 2, stream);

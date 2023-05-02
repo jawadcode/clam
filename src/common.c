@@ -38,6 +38,6 @@ void StringBuf_push_string(StringBuf *buf, String string) {
     memcpy(buf->buffer + old_length, string.buffer, string.length);
 }
 
-void StringBuf_print(StringBuf *string) {
-    fwrite(string->buffer, sizeof(char), string->length, stdout);
+void StringBuf_print(StringBuf string) {
+    fwrite(string.buffer, sizeof(char), string.length, stdout);
 }
