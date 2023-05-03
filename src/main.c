@@ -55,6 +55,10 @@ void run_cmd(const String cmd) {
 
 void run(const String source) {
     Parser parser = new_parser("stdin", source);
+    for (Token tok = next_token(&parser.lexer); tok.kind != TK_EOF;
+         tok = next_token(&parser.lexer))
+        print_token(parser.source, tok);
+    parser.lexer = new_lexer(parser.source);
     ParseResult result = parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
@@ -82,6 +86,9 @@ StringBuf read_line() {
         StringBuf_push(&str, c);
         c = fgetc(stdin);
     }
+    if (c == EOF)
+        exit(0);
+    // Ideally we could remove this but the lexer depends on it
     StringBuf_push(&str, '\0');
     return str;
 }

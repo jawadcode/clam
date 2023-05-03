@@ -362,6 +362,13 @@ static ASTResult parse_list(Parser *self) {
             next(self);
         } else if (peeked == TK_RSQUARE) {
             break;
+        } else {
+            error = (SyntaxError){
+                .tag = ERROR_UNEXPECTED_TOKEN,
+                .error = {.unexpected_token = {.expected = STR("',' or ']'"),
+                                               .got = next(self),
+                                               .span = current_span(self)}}};
+            goto FAILURE;
         }
     }
     list_span.end = next(self).span.end;
@@ -440,7 +447,7 @@ static ParseResult parse_operand(Parser *self) {
         break;
     }
     default: {
-        next(self);
+        fflush(stdout);
         return (ParseResult){
             .tag = RESULT_ERR,
             .value = {
@@ -448,7 +455,7 @@ static ParseResult parse_operand(Parser *self) {
                     .tag = ERROR_UNEXPECTED_TOKEN,
                     .error = {.unexpected_token = (SyntaxError_UnexpectedToken){
                                   .expected = STR("expression"),
-                                  .got = next(self),
+                                  .got = *peek(self),
                                   .span = current_span(self),
                               }}}}};
     }
@@ -483,7 +490,6 @@ static ParseResult parse_operand(Parser *self) {
         if (peek(self)->kind == TK_LSQUARE) {
             continue;
         } else {
-            next(self);
             return (ParseResult){
                 .tag = RESULT_ERR,
                 .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
@@ -681,7 +687,7 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
         fputs("expected ", stream);
         String_write(ut.expected, stream);
         fputs(", got '", stream);
-        String_write(token_to_string(self->lexer, ut.got), stream);
+        String_write(token_kind_to_string(ut.got.kind), stream);
         fputc('\'', stream);
         break;
     }
