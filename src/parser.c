@@ -141,7 +141,6 @@ static ParseStringResult parse_string(Parser *self, Span span) {
             escaped = true;
         } else {
             StringBuf_push(&buffer, str[index]);
-            buffer.buffer[index] = str[index];
         }
     }
     return (ParseStringResult){
@@ -558,9 +557,20 @@ void Parser_free(Parser *self) {
         switch (item.tag) {
         case AST_LIST:
             AST_List_free(&item.value.list);
+            break;
         case AST_LET_IN:
             AST_LetBindVec_free(&item.value.let_in.bindings);
-        case AST_LITERAL:
+            break;
+        case AST_LITERAL: {
+            AST_Literal lit = item.value.literal;
+            switch (lit.tag) {
+            case LITERAL_STRING:
+                StringBuf_free(&lit.value.string);
+            default:
+                (void)0;
+            }
+            break;
+        }
         case AST_IDENT:
         case AST_ABSTRACTION:
         case AST_APPLICATION:
@@ -640,7 +650,6 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
     LineInfo line_info = get_line_nums(
         (String){.buffer = self->source.buffer, .length = self->source.length},
         span.start);
-    dump_info(line_info, span);
     size_t num_digits = floor(log10((double)line_info.line_num) + 1.0);
     write_repeat(' ', num_digits + 2, stream);
     fputs("\x1b[37m┌─[\x1b[0m", stream);
@@ -677,11 +686,17 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
     write_repeat(' ', num_digits + 4 + span.start - line_info.line_start,
                  stream);
     switch (error.tag) {
-    case ERROR_INVALID_ESC_SEQ:
-        fputs("invalid escape sequence '\\", stream);
-        fputc(*(self->source.buffer + span.start), stream);
+    case ERROR_INVALID_ESC_SEQ: {
+        SyntaxError_InvalidEscSeq ies = error.error.invalid_esc_seq;
+        fputs("invalid escape sequence '", stream);
+        String_write(
+            (String){.buffer = self->source.buffer + ies.escape_sequence.start,
+                     .length =
+                         ies.escape_sequence.end - ies.escape_sequence.start},
+            stderr);
         fputc('\'', stream);
         break;
+    }
     case ERROR_UNEXPECTED_TOKEN: {
         SyntaxError_UnexpectedToken ut = error.error.unexpected_token;
         fputs("expected ", stream);

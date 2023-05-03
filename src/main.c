@@ -55,15 +55,17 @@ void run_cmd(const String cmd) {
 
 void run(const String source) {
     Parser parser = new_parser("stdin", source);
+    puts("Lexer Output:");
     for (Token tok = next_token(&parser.lexer); tok.kind != TK_EOF;
          tok = next_token(&parser.lexer))
         print_token(parser.source, tok);
     parser.lexer = new_lexer(parser.source);
     ParseResult result = parse_expr(&parser);
+    putchar('\n');
     switch (result.tag) {
     case RESULT_OK: {
         StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
-        puts("\nParser Output:");
+        puts("Parser Output:");
         StringBuf_print(sexpr);
         putchar('\n');
         StringBuf_free(&sexpr);
