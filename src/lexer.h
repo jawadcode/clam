@@ -67,15 +67,13 @@ typedef struct {
     Span span;
 } Token;
 
+// Uninitialised if 'tag == MAYBE_NONE' and intialised if 'tag == MAYBE_SOME'
 typedef struct {
     enum {
         MAYBE_SOME,
         MAYBE_NONE,
     } tag;
-    union {
-        Token some;
-        void *none;
-    } value;
+    Token some;
 } MaybeToken;
 
 // Stores lexer state
@@ -90,22 +88,22 @@ DECL_VEC_HEADER(Token, TokenVec)
 // clang-format off
 
 // Create a new lexer that operates on `source`
-Lexer new_lexer(const String source);
+Lexer Lexer_new(const String source);
 // clang-format on
 
 // Get the current peeked token
-Token *peek_token(Lexer *lexer);
+Token *Lexer_peek_token(Lexer *lexer);
 
 // Scan the next token from `lexer->source`
-Token next_token(Lexer *lexer);
+Token Lexer_next_token(Lexer *lexer);
 
 // Convert a token kind to a string
-String token_kind_to_string(TokenKind kind);
+String TK_to_string(TokenKind kind);
 
 // Get the token as a slice of the source string
-String token_to_string(Lexer lexer, Token token);
+String Token_to_string(Lexer lexer, Token token);
 
 // Print a token using printf
-void print_token(const String source, Token token);
+void Token_print(const String source, Token token);
 
 #endif

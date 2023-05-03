@@ -1,43 +1,64 @@
-#include "lexer.h"
 #include <alloca.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 
-inline Lexer Lexer_new(const String source) {
+#include "lexer.h"
+
+// Create a new 'Lexer' which lexes 'source'
+inline Lexer new_lexer(const String source) {
     return (Lexer){
         .source = source,
         .start = 0,
         .current = 0,
-        .peeked = {.tag = MAYBE_NONE},
+        .peeked = {MAYBE_NONE, {.none = NULL}},
     };
+}
+
+static inline bool is_ident(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
+}
+
+static inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
+
+static inline char next_char(Lexer *lexer) {
+    return lexer->source.buffer[lexer->current];
+}
+
+static inline bool is_at_end(Lexer *lexer) {
+    return (size_t)lexer->current + 1 == lexer->source.length;
+}
+
+static inline char peek(Lexer *lexer) {
+    return lexer->source.buffer[lexer->current];
 }
 
 static inline void skip(Lexer *lexer) { lexer->current++; }
 
-static inline char peek(Lexer *lexer) {
-    if (lexer->current == (lexer->source.length - 1))
-        return '\0';
-    else
-        return lexer->source.buffer[lexer->current];
-}
-
-static inline char next(Lexer *lexer) {
+static inline char advance(Lexer *lexer) {
     return lexer->source.buffer[lexer->current++];
 }
 
-static inline bool at_end(Lexer *lexer) {
-    return lexer->current == (lexer->source.length - 1);
-}
-
-static inline char checked_next(Lexer *lexer) {
-    if (at_end(lexer))
+static inline char safe_advance(Lexer *lexer) {
+    if (is_at_end(lexer))
         return '\0';
     else
         return lexer->source.buffer[lexer->current + 1];
 }
 
-static void skip_whitespace(Lexer *lexer) {
-    while (true) {
+static inline bool match(Lexer *lexer, char expected) {
+    if (is_at_end(lexer) || next_char(lexer) != expected)
+        return false;
+    else {
+        skip(lexer);
+        return true;
+    }
+}
+
+void skip_whitespace(Lexer *lexer) {
+    for (;;) {
         switch (peek(lexer)) {
         case '\n':
         case '\r':
@@ -47,8 +68,10 @@ static void skip_whitespace(Lexer *lexer) {
             break;
         case '#':
             skip(lexer);
-            for (char c = peek(lexer); c != '\n' && c != '\0'; c++)
-                skip(lexer);
+            while (peek(lexer) != '\n' && !is_at_end(lexer))
+                advance(lexer);
+            break;
+        case '\0':
             break;
         default:
             return;
@@ -56,23 +79,10 @@ static void skip_whitespace(Lexer *lexer) {
     }
 }
 
-static inline bool is_ident(char c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-}
-
-static inline bool is_digit(char c) { return c >= '0' && c <= '9'; }
-
-static inline MaybeToken take(MaybeToken *self) {
-    MaybeToken temp = *self;
-    *self = (MaybeToken){.tag = MAYBE_NONE};
-    return temp;
-}
-
-static TokenKind check_kw(Lexer *lexer, size_t start, const String rest,
-                          TokenKind kind) {
-    if (lexer->current - lexer->start == start + rest.length &&
-        memcmp(lexer->source.buffer + lexer->start + start, rest.buffer,
-               rest.length) == 0)
+static TokenKind check_kw(Lexer *lexer, size_t start, size_t length,
+                          const char *rest, TokenKind kind) {
+    if (lexer->current - lexer->start == start + length &&
+        memcmp(lexer->source.buffer + lexer->start + start, rest, length) == 0)
         return kind;
     else
         return TK_IDENT;
@@ -81,33 +91,33 @@ static TokenKind check_kw(Lexer *lexer, size_t start, const String rest,
 static TokenKind ident_type(Lexer *lexer) {
     switch (lexer->source.buffer[lexer->start]) {
     case 'a':
-        return check_kw(lexer, 1, STR("nd"), TK_AND);
+        return check_kw(lexer, 1, 2, "nd", TK_AND);
     case 'e':
-        return check_kw(lexer, 1, STR("lse"), TK_ELSE);
+        return check_kw(lexer, 1, 3, "lse", TK_ELSE);
     case 'f':
         if (lexer->current - lexer->start > 1) {
             switch (lexer->source.buffer[lexer->start + 1]) {
             case 'a':
-                return check_kw(lexer, 2, STR("lse"), TK_FALSE);
+                return check_kw(lexer, 2, 3, "lse", TK_FALSE);
             case 'u':
-                return check_kw(lexer, 2, STR("n"), TK_FUN);
+                return check_kw(lexer, 2, 1, "n", TK_FUN);
             }
         }
         break;
     case 'i':
-        return check_kw(lexer, 1, STR("n"), TK_IN);
+        return check_kw(lexer, 1, 1, "n", TK_IN);
     case 'l':
-        return check_kw(lexer, 1, STR("et"), TK_LET);
+        return check_kw(lexer, 1, 2, "et", TK_LET);
     case 'n':
-        return check_kw(lexer, 1, STR("ot"), TK_NOT);
+        return check_kw(lexer, 1, 2, "ot", TK_NOT);
     case 'o':
-        return check_kw(lexer, 1, STR("r"), TK_OR);
+        return check_kw(lexer, 1, 1, "r", TK_OR);
     case 'p':
-        return check_kw(lexer, 1, STR("rint"), TK_PRINT);
+        return check_kw(lexer, 1, 4, "rint", TK_PRINT);
     case 't':
-        return check_kw(lexer, 1, STR("hen"), TK_THEN);
+        return check_kw(lexer, 1, 3, "hen", TK_THEN);
     case 'u':
-        return check_kw(lexer, 1, STR("nit"), TK_UNIT);
+        return check_kw(lexer, 1, 3, "nit", TK_UNIT);
     }
 
     return TK_IDENT;
@@ -125,7 +135,7 @@ static TokenKind number(Lexer *lexer) {
         skip(lexer);
 
     // Look for a fractional part
-    if (peek(lexer) == '.' && is_digit(checked_next(lexer))) {
+    if (peek(lexer) == '.' && is_digit(safe_advance(lexer))) {
         // Consume the "."
         skip(lexer);
 
@@ -136,19 +146,10 @@ static TokenKind number(Lexer *lexer) {
     return TK_NUMBER;
 }
 
-static inline bool match(Lexer *lexer, char expected) {
-    if (at_end(lexer) || peek(lexer) != expected)
-        return false;
-    else {
-        skip(lexer);
-        return true;
-    }
-}
-
-static inline TokenKind string(Lexer *lexer) {
+static TokenKind string(Lexer *lexer) {
     bool escaped = false;
 
-    while (!at_end(lexer)) {
+    while (!is_at_end(lexer)) {
         if (peek(lexer) == '\\') {
             skip(lexer);
             escaped = true;
@@ -159,75 +160,81 @@ static inline TokenKind string(Lexer *lexer) {
             continue;
         } else if (peek(lexer) == '"') {
             break;
-        } else
-            skip(lexer);
+        }
+
+        skip(lexer);
     }
 
-    if (at_end(lexer))
+    if (is_at_end(lexer))
         return TK_INVALID;
-    else {
-        skip(lexer);
-        return TK_STRING;
-    }
+
+    skip(lexer); // closing quote
+    return TK_STRING;
 }
 
-TokenKind next_kind(Lexer *lexer) {
-    skip_whitespace(lexer);
-
-    if (at_end(lexer))
+static TokenKind next_kind(Lexer *lexer) {
+    if (is_at_end(lexer))
         return TK_EOF;
 
-    char c = next(lexer);
+    char c = advance(lexer);
     if (is_ident(c))
         return ident(lexer);
     else if (is_digit(c))
         return number(lexer);
-    else
-        switch (c) {
-        case '(':
-            return TK_LPAREN;
-        case ')':
-            return TK_RPAREN;
-        case '[':
-            return TK_LSQUARE;
-        case ']':
-            return TK_RSQUARE;
-        case ',':
-            return TK_COMMA;
-        case '+':
-            return TK_ADD;
-        case '-':
-            return TK_SUB;
-        case '*':
-            return TK_MUL;
-        case '/':
-            return TK_DIV;
-        case '%':
-            return TK_MOD;
-        case '!':
-            return match(lexer, '=') ? TK_NEQ : TK_INVALID;
-        case '=':
-            return match(lexer, '=')   ? TK_EQ
-                   : match(lexer, '>') ? TK_ARROW
-                                       : TK_ASSIGN;
-        case '<':
-            return match(lexer, '=') ? TK_LEQ : TK_LT;
-        case '>':
-            return match(lexer, '=') ? TK_GEQ : TK_GT;
-        case '"':
-            return string(lexer);
-        default:
-            return TK_INVALID;
-        }
+
+    switch (c) {
+    case '(':
+        return TK_LPAREN;
+    case ')':
+        return TK_RPAREN;
+    case '[':
+        return TK_LSQUARE;
+    case ']':
+        return TK_RSQUARE;
+    case ',':
+        return TK_COMMA;
+    case '+':
+        return TK_ADD;
+    case '-':
+        return TK_SUB;
+    case '*':
+        return TK_MUL;
+    case '/':
+        return TK_DIV;
+    case '%':
+        return TK_MOD;
+    case '!':
+        return match(lexer, '=') ? TK_NEQ : TK_INVALID;
+    case '=':
+        return match(lexer, '=')   ? TK_EQ
+               : match(lexer, '>') ? TK_ARROW
+                                   : TK_ASSIGN;
+    case '<':
+        return match(lexer, '=') ? TK_LEQ : TK_LT;
+    case '>':
+        return match(lexer, '=') ? TK_GEQ : TK_GT;
+    case '"':
+        return string(lexer);
+    default:
+        return TK_INVALID;
+    }
 }
 
-Token Lexer_next_token(Lexer *lexer) {
+static inline MaybeToken take(MaybeToken *self) {
+    MaybeToken temp = *self;
+    *self = (MaybeToken){MAYBE_NONE, {.none = NULL}};
+    return temp;
+}
+
+// TODO: Remove the need for a null terminator at the end of 'lexer->source'
+Token next_token(Lexer *lexer) {
     MaybeToken peeked = take(&lexer->peeked);
     switch (peeked.tag) {
     case MAYBE_SOME:
-        return peeked.some;
-    case MAYBE_NONE:
+        return peeked.value.some;
+    case MAYBE_NONE: {
         skip_whitespace(lexer);
+
         lexer->start = lexer->current;
         return (Token){.kind = next_kind(lexer),
                        .span = {
@@ -235,20 +242,21 @@ Token Lexer_next_token(Lexer *lexer) {
                            .end = lexer->current,
                        }};
     }
+    }
 }
 
-Token *Lexer_peek_token(Lexer *lexer) {
+Token *peek_token(Lexer *lexer) {
     if (lexer->peeked.tag == MAYBE_NONE) {
         lexer->peeked = (MaybeToken){
             .tag = MAYBE_SOME,
-            .some = Lexer_next_token(lexer),
+            .value = {.some = next_token(lexer)},
         };
     }
 
-    return &lexer->peeked.some;
+    return &lexer->peeked.value.some;
 }
 
-String TK_to_string(TokenKind kind) {
+String token_kind_to_string(TokenKind kind) {
     switch (kind) {
     case TK_LET:
         return STR("let");
@@ -327,15 +335,15 @@ String TK_to_string(TokenKind kind) {
     }
 }
 
-String Token_to_string(Lexer lexer, Token token) {
+String token_to_string(Lexer lexer, Token token) {
     return (String){
         .buffer = lexer.source.buffer + token.span.start,
         .length = token.span.end - token.span.start,
     };
 }
 
-void Token_print(const String source, Token token) {
-    String kind = TK_to_string(token.kind);
+void print_token(const String source, Token token) {
+    String kind = token_kind_to_string(token.kind);
 
     size_t length = token.span.end - token.span.start;
     const char *start = source.buffer + token.span.start;

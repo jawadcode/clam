@@ -47,14 +47,18 @@ Parser new_parser(const char *file_name, const String source) {
     return (Parser){
         .file_name = file_name,
         .source = source,
-        .lexer = new_lexer(source),
+        .lexer = Lexer_new(source),
         .ast_arena = ASTVec_new(),
     };
 }
 
-static inline Token *peek(Parser *self) { return peek_token(&self->lexer); }
+static inline Token *peek(Parser *self) {
+    return Lexer_peek_token(&self->lexer);
+}
 
-static inline Token next(Parser *self) { return next_token(&self->lexer); }
+static inline Token next(Parser *self) {
+    return Lexer_next_token(&self->lexer);
+}
 
 static bool in(TokenKind tk, const TokenKind list[], size_t len) {
     bool contains = false;
@@ -224,7 +228,7 @@ static inline Span current_span(Parser *self) {
 
 static TokenResult expect(Parser *self, TokenKind kind) {
     Token token = next(self);
-    String kind_string = token_kind_to_string(kind);
+    String kind_string = TK_to_string(kind);
 
     if (token.kind != kind) {
         return (TokenResult){
@@ -263,11 +267,11 @@ static ParseResult parse_abstraction(Parser *self) {
     StringVec args = StringVec_new();
     Token first_param_token;
     RET_ERR_ASSIGN(first_param_token, TokenResult, expect(self, TK_IDENT));
-    StringVec_push(&args, token_to_string(self->lexer, first_param_token));
+    StringVec_push(&args, Token_to_string(self->lexer, first_param_token));
 
     while (at(self, TK_IDENT)) {
         Token arg_token = next(self);
-        StringVec_push(&args, token_to_string(self->lexer, arg_token));
+        StringVec_push(&args, Token_to_string(self->lexer, arg_token));
     }
     RET_ERR(TokenResult, expect(self, TK_ARROW));
 
@@ -702,7 +706,7 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
         fputs("expected ", stream);
         String_write(ut.expected, stream);
         fputs(", got '", stream);
-        String_write(token_kind_to_string(ut.got.kind), stream);
+        String_write(TK_to_string(ut.got.kind), stream);
         fputc('\'', stream);
         break;
     }

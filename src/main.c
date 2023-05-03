@@ -56,10 +56,10 @@ void run_cmd(const String cmd) {
 void run(const String source) {
     Parser parser = new_parser("stdin", source);
     puts("Lexer Output:");
-    for (Token tok = next_token(&parser.lexer); tok.kind != TK_EOF;
-         tok = next_token(&parser.lexer))
-        print_token(parser.source, tok);
-    parser.lexer = new_lexer(parser.source);
+    for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
+         tok = Lexer_next_token(&parser.lexer))
+        Token_print(parser.source, tok);
+    parser.lexer = Lexer_new(parser.source);
     ParseResult result = parse_expr(&parser);
     putchar('\n');
     switch (result.tag) {
@@ -127,7 +127,11 @@ void run_file(const char *path) {
     buffer[bytes_read] = '\0';
 
     fclose(file);
-    run((String){.buffer = buffer, .length = file_size});
+    String f = {.buffer = buffer, .length = file_size};
+    putchar('%');
+    String_print(f);
+    putchar('%');
+    run(f);
     free(buffer);
 }
 
@@ -139,5 +143,6 @@ int main(int argc, char **argv) {
         puts("Clam Interpreter:\n");
         repl();
     }
+
     return 0;
 }

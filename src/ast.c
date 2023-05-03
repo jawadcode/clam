@@ -2,6 +2,7 @@
 #include "common.h"
 #include <stddef.h>
 #include <stdio.h>
+#include <string.h>
 
 DEF_VEC(AST, ASTVec)
 
@@ -61,9 +62,14 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
                                                               : STR("false"));
             break;
         case LITERAL_NUMBER: {
-            char num[19];
-            snprintf(num, 19, "%f", literal->value.number);
-            StringBuf_push_string(buf, STR(num));
+            char num[20];
+            // I hate that I have to use a printf-style function but needs must
+            snprintf(num, 20, "%f", literal->value.number);
+            StringBuf_push_string(buf,
+                                  (String){.buffer = num,
+                                           // 20 isn't necessarily the length of
+                                           // 'num', it may well use less
+                                           .length = strlen(num)});
             break;
         }
         case LITERAL_STRING: {
