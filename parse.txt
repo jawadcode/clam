@@ -1,6 +1,0 @@
-a b     -> (app a b)
-a b c   -> (app (app a b) c)
-a + b   -> (+ a b)
-a - b   -> (- a b)
-a b + c -> (+ (app a b) c)
-a + b c -> (+ a (app b c))
