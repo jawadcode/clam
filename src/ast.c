@@ -131,7 +131,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         break;
     }
     case AST_PRINT: {
-        AST_Print *print = &node->value.application;
+        AST_Print *print = &node->value.print;
         StringBuf_push_string(buf, STR("(print "));
         format_ast_node(arena, print->expr, buf);
         StringBuf_push(buf, ')');
