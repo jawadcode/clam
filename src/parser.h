@@ -9,14 +9,14 @@
 
 // Stores parser state
 typedef struct {
-    const char *file_name;
+    const String file_name;
     const String source;
     Lexer lexer;
     ASTVec ast_arena;
 } Parser;
 
 // Creates a new parser that operates on 'source'
-Parser new_parser(const char *file_name, const String source);
+Parser Parser_new(const String file_name, const String source);
 
 typedef struct SyntaxError_InvalidEscSeq {
     Span string;
@@ -43,14 +43,15 @@ typedef struct {
 } SyntaxError;
 
 // Generate an error diagnostic message from a `SyntaxError`
-void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream);
+void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream);
 
 DEF_RESULT(ASTIndex, SyntaxError, Parse);
 
 // Parse the source as an expression, pushing the AST nodes to 'self.ast_arena'
-ParseResult parse_expr(Parser *self);
+// and returning the index of the parent expression
+ParseResult Parser_parse_expr(Parser *self);
 
-// Free all of the allocations within each AST node and then free the AST arena
+// Free all the allocations within each AST node and then free the AST arena
 // itself
 void Parser_free(Parser *self);
 

@@ -24,7 +24,8 @@
 #define ASSERT(assertion, message) (void)0
 #endif
 
-// I hate this language and all of its compilers
+// I hate this language, all of its compilers and all of their stupid
+// idiosyncrasies
 #ifdef _MSC_VER
 #define UNREACHABLE                                                            \
     default:                                                                   \
@@ -39,8 +40,8 @@
         ((void)0)
 #endif
 
-// A string which consists of a 'buffer' which is not null-terminated and its
-// length in bytes
+// A string which consists of a 'buffer' which is not necessarily
+// null-terminated and its length in bytes
 typedef struct {
     const char *buffer;
     size_t length;
@@ -48,9 +49,9 @@ typedef struct {
 
 // ONLY WORKS FOR STRING LITERALS
 #define STR(x)                                                                 \
-    (String) { .buffer = x, .length = sizeof(x) - 1 }
+    (String) { .buffer = (x), .length = sizeof(x) - 1 }
 
-void String_print(const String string);
+void String_print(String string);
 
 void String_write(String string, FILE *file);
 

@@ -1,5 +1,4 @@
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +7,6 @@
 #include "common.h"
 #include "lexer.h"
 #include "parser.h"
-#include "vec.h"
 
 // Ensure cmd.length > 2
 static inline bool match_rest(const String cmd, const char *rest) {
@@ -54,13 +52,13 @@ void run_cmd(const String cmd) {
 }
 
 void run(const String source) {
-    Parser parser = new_parser("stdin", source);
+    Parser parser = Parser_new(STR("stdin"), source);
     puts("Lexer Output:");
-    for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
+    /*for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
          tok = Lexer_next_token(&parser.lexer))
         Token_print(parser.source, tok);
-    parser.lexer = Lexer_new(parser.source);
-    ParseResult result = parse_expr(&parser);
+    parser.lexer = Lexer_new(parser.source);*/
+    ParseResult result = Parser_parse_expr(&parser);
     putchar('\n');
     switch (result.tag) {
     case RESULT_OK: {
@@ -73,7 +71,7 @@ void run(const String source) {
     }
     case RESULT_ERR: {
         SyntaxError error = result.value.err;
-        SyntaxError_print_diag(&parser, error, stderr);
+        Parser_print_diag(&parser, error, stderr);
         break;
     }
     }

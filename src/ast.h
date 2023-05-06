@@ -23,7 +23,6 @@ typedef struct AST_Literal {
         LITERAL_STRING,
     } tag;
     union AST_LiteralUnion {
-        void *unit;
         bool boolean;
         double number;
         StringBuf string;
@@ -59,8 +58,9 @@ typedef struct AST_Application {
     ASTIndex argument;
 } AST_Application;
 
-// An expression that when evaluated, prints 'expr', this is built-in because
-// I'm lazy
+// An expression that when evaluated, prints 'expr' and returns the value that
+// was passed to it, akin to the 'dump' function from the 'batteries' OCaml
+// library
 typedef struct AST_Print {
     ASTIndex expr;
 } AST_Print;
@@ -90,23 +90,23 @@ typedef struct AST_UnaryOp {
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
 typedef enum AST_BinOp {
-    BINOP_FNPIPE = 20,
+    BINOP_FNPIPE = 22,
 
-    BINOP_ADD = 21,
-    BINOP_SUB = 22,
-    BINOP_MUL = 23,
-    BINOP_DIV = 24,
-    BINOP_MOD = 25,
+    BINOP_ADD = 23,
+    BINOP_SUB = 24,
+    BINOP_MUL = 25,
+    BINOP_DIV = 26,
+    BINOP_MOD = 27,
 
-    BINOP_AND = 27,
-    BINOP_OR = 28,
+    BINOP_AND = 29,
+    BINOP_OR = 30,
 
-    BINOP_LT = 29,
-    BINOP_LEQ = 30,
-    BINOP_GT = 31,
-    BINOP_GEQ = 32,
-    BINOP_EQ = 33,
-    BINOP_NEQ = 34,
+    BINOP_LT = 31,
+    BINOP_LEQ = 32,
+    BINOP_GT = 33,
+    BINOP_GEQ = 34,
+    BINOP_EQ = 35,
+    BINOP_NEQ = 36,
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'
@@ -132,7 +132,7 @@ typedef struct AST {
         AST_LET_IN,
         AST_ABSTRACTION,
         AST_APPLICATION,
-        // AST_PRINT,
+        AST_PRINT,
         AST_IF_ELSE,
         AST_UNARY_OP,
         AST_BINARY_OP,
@@ -145,7 +145,7 @@ typedef struct AST {
         AST_LetIn let_in;
         AST_Abstraction abstraction;
         AST_Application application;
-        // AST_Print print;
+        AST_Print print;
         AST_IfElse if_else;
         AST_UnaryOp unary_op;
         AST_BinaryOp binary_op;

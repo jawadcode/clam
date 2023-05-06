@@ -1,5 +1,6 @@
 builddir
 .cache
 .clang-format
+.idea
 .replit
 replit.nix

@@ -1,37 +1,37 @@
 [
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_ast.c.o -MF clam.p/src_ast.c.o.d -o clam.p/src_ast.c.o -c ../src/ast.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_ast.c.o -MF clam.p/src_ast.c.o.d -o clam.p/src_ast.c.o -c ../src/ast.c",
     "file": "../src/ast.c",
     "output": "clam.p/src_ast.c.o"
   },
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_common.c.o -MF clam.p/src_common.c.o.d -o clam.p/src_common.c.o -c ../src/common.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_common.c.o -MF clam.p/src_common.c.o.d -o clam.p/src_common.c.o -c ../src/common.c",
     "file": "../src/common.c",
     "output": "clam.p/src_common.c.o"
   },
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_lexer.c.o -MF clam.p/src_lexer.c.o.d -o clam.p/src_lexer.c.o -c ../src/lexer.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_lexer.c.o -MF clam.p/src_lexer.c.o.d -o clam.p/src_lexer.c.o -c ../src/lexer.c",
     "file": "../src/lexer.c",
     "output": "clam.p/src_lexer.c.o"
   },
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_main.c.o -MF clam.p/src_main.c.o.d -o clam.p/src_main.c.o -c ../src/main.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_main.c.o -MF clam.p/src_main.c.o.d -o clam.p/src_main.c.o -c ../src/main.c",
     "file": "../src/main.c",
     "output": "clam.p/src_main.c.o"
   },
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_memory.c.o -MF clam.p/src_memory.c.o.d -o clam.p/src_memory.c.o -c ../src/memory.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_memory.c.o -MF clam.p/src_memory.c.o.d -o clam.p/src_memory.c.o -c ../src/memory.c",
     "file": "../src/memory.c",
     "output": "clam.p/src_memory.c.o"
   },
   {
     "directory": "/home/jawad/Desktop/langdev/clam/builddir",
-    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -O0 -g -MD -MQ clam.p/src_parser.c.o -MF clam.p/src_parser.c.o.d -o clam.p/src_parser.c.o -c ../src/parser.c",
+    "command": "clang -Iclam.p -I. -I.. -fcolor-diagnostics -fsanitize=address -fno-omit-frame-pointer -D_FILE_OFFSET_BITS=64 -Wall -Winvalid-pch -Wextra -Wpedantic -std=c2x -O2 -g -ftime-trace -MD -MQ clam.p/src_parser.c.o -MF clam.p/src_parser.c.o.d -o clam.p/src_parser.c.o -c ../src/parser.c",
     "file": "../src/parser.c",
     "output": "clam.p/src_parser.c.o"
   }

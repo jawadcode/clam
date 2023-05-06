@@ -95,7 +95,14 @@ static TokenKind ident_type(Lexer *lexer) {
         }
         break;
     case 'i':
-        return check_kw(lexer, 1, STR("n"), TK_IN);
+        if (lexer->current - lexer->start > 1) {
+            switch (lexer->source.buffer[lexer->start + 1]) {
+            case 'f':
+                return check_kw(lexer, 2, STR(""), TK_IF);
+            case 'n':
+                return check_kw(lexer, 2, STR(""), TK_IN);
+            }
+        }
     case 'l':
         return check_kw(lexer, 1, STR("et"), TK_LET);
     case 'n':
@@ -105,12 +112,19 @@ static TokenKind ident_type(Lexer *lexer) {
     case 'p':
         return check_kw(lexer, 1, STR("rint"), TK_PRINT);
     case 't':
-        return check_kw(lexer, 1, STR("hen"), TK_THEN);
+        if (lexer->current - lexer->start > 1) {
+            switch (lexer->source.buffer[lexer->start + 1]) {
+            case 'h':
+                return check_kw(lexer, 2, STR("en"), TK_THEN);
+            case 'r':
+                return check_kw(lexer, 2, STR("ue"), TK_TRUE);
+            }
+        }
     case 'u':
         return check_kw(lexer, 1, STR("nit"), TK_UNIT);
+    default:
+        return TK_IDENT;
     }
-
-    return TK_IDENT;
 }
 
 static TokenKind ident(Lexer *lexer) {
@@ -192,6 +206,10 @@ TokenKind next_kind(Lexer *lexer) {
             return TK_LSQUARE;
         case ']':
             return TK_RSQUARE;
+        case '{':
+            return TK_LCURLY;
+        case '}':
+            return TK_RCURLY;
         case ',':
             return TK_COMMA;
         case '+':
@@ -288,6 +306,10 @@ String TK_to_string(TokenKind kind) {
         return STR("[");
     case TK_RSQUARE:
         return STR("]");
+    case TK_LCURLY:
+        return STR("{");
+    case TK_RCURLY:
+        return STR("}");
     case TK_COMMA:
         return STR(",");
     case TK_FNPIPE:

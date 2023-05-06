@@ -121,6 +121,33 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ')');
         break;
     }
+    case AST_APPLICATION: {
+        AST_Application *app = &node->value.application;
+        StringBuf_push_string(buf, STR("(app "));
+        format_ast_node(arena, app->function, buf);
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, app->argument, buf);
+        StringBuf_push(buf, ')');
+        break;
+    }
+    case AST_PRINT: {
+        AST_Print *print = &node->value.application;
+        StringBuf_push_string(buf, STR("(print "));
+        format_ast_node(arena, print->expr, buf);
+        StringBuf_push(buf, ')');
+        break;
+    }
+    case AST_IF_ELSE: {
+        AST_IfElse *if_else = &node->value.if_else;
+        StringBuf_push_string(buf, STR("(if "));
+        format_ast_node(arena, if_else->condition, buf);
+        StringBuf_push_string(buf, STR(" :then "));
+        format_ast_node(arena, if_else->then, buf);
+        StringBuf_push_string(buf, STR(" :else "));
+        format_ast_node(arena, if_else->else_, buf);
+        StringBuf_push(buf, ')');
+        break;
+    }
     case AST_UNARY_OP: {
         AST_UnaryOp *unop = &node->value.unary_op;
         StringBuf_push(buf, '(');
@@ -140,26 +167,6 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         format_ast_node(arena, binop->rhs, buf);
         StringBuf_push(buf, ')');
         // I hate writing switch statements
-        break;
-    }
-    case AST_APPLICATION: {
-        AST_Application *app = &node->value.application;
-        StringBuf_push_string(buf, STR("(app "));
-        format_ast_node(arena, app->function, buf);
-        StringBuf_push(buf, ' ');
-        format_ast_node(arena, app->argument, buf);
-        StringBuf_push(buf, ')');
-        break;
-    }
-    case AST_IF_ELSE: {
-        AST_IfElse *if_else = &node->value.if_else;
-        StringBuf_push_string(buf, STR("(if "));
-        format_ast_node(arena, if_else->condition, buf);
-        StringBuf_push_string(buf, STR(" :then "));
-        format_ast_node(arena, if_else->then, buf);
-        StringBuf_push_string(buf, STR(" :else "));
-        format_ast_node(arena, if_else->else_, buf);
-        StringBuf_push(buf, ')');
         break;
     }
     case AST_LIST_INDEX: {

@@ -32,33 +32,35 @@ typedef enum {
     TK_RPAREN = 16,  // ")"
     TK_LSQUARE = 17, // "["
     TK_RSQUARE = 18, // "]"
-    TK_COMMA = 19,   // ","
-    TK_FNPIPE = 20,  // "|>"
+    TK_LCURLY = 19,  // "{"
+    TK_RCURLY = 20,  // "}"
+    TK_COMMA = 21,   // ","
+    TK_FNPIPE = 22,  // "|>"
 
     /* ARITHMETIC OPS */
     // TK_SUB (unary)
-    TK_ADD = 21, // "+"
-    TK_SUB = 22, // "-"
-    TK_MUL = 23, // "*"
-    TK_DIV = 24, // "/"
-    TK_MOD = 25, // "%"
+    TK_ADD = 23, // "+"
+    TK_SUB = 24, // "-"
+    TK_MUL = 25, // "*"
+    TK_DIV = 26, // "/"
+    TK_MOD = 27, // "%"
 
     /* BOOLEAN OPS */
-    TK_NOT = 26, // "not"
-    TK_AND = 27, // "and"
-    TK_OR = 28,  // "or"
+    TK_NOT = 28, // "not"
+    TK_AND = 29, // "and"
+    TK_OR = 30,  // "or"
 
     /* COMPARISON OPS */
-    TK_LT = 29,  // "<"
-    TK_LEQ = 30, // "<="
-    TK_GT = 31,  // ">"
-    TK_GEQ = 32, // ">="
-    TK_EQ = 33,  // "=="
-    TK_NEQ = 34, // "!="
+    TK_LT = 31,  // "<"
+    TK_LEQ = 32, // "<="
+    TK_GT = 33,  // ">"
+    TK_GEQ = 34, // ">="
+    TK_EQ = 35,  // "=="
+    TK_NEQ = 36, // "!="
 
     /* SPECIAL */
-    TK_INVALID = 35, // Invalid token
-    TK_EOF = 36,     // End Of File
+    TK_INVALID = 37, // Invalid token
+    TK_EOF = 38,     // End Of File
 } TokenKind;
 
 // A singular token

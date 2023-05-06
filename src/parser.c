@@ -6,11 +6,8 @@
 #include "result.h"
 #include "vec.h"
 #include <math.h>
-#include <stdbool.h>
 #include <stddef.h>
-#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
 
 DEF_VEC_T(String, StringVec)
 
@@ -21,29 +18,22 @@ DEF_RESULT(StringBuf, SyntaxError, ParseString);
 DEF_RESULT(Token, SyntaxError, Token);
 DEF_RESULT(AST, SyntaxError, AST);
 
-#define TK_EXPR_LEN 12
+#define TK_EXPR_LEN 11
 static const TokenKind TK_EXPR[TK_EXPR_LEN] = {
-    TK_UNIT,   TK_TRUE,    TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
-    TK_LPAREN, TK_LSQUARE, TK_LET,   TK_FUN,    TK_SUB,    TK_NOT};
+    TK_UNIT,   TK_TRUE,   TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
+    TK_LPAREN, TK_LCURLY, TK_LET,   TK_IF,     TK_FUN};
 
 #define TK_BINOPS_LEN 15
 static const TokenKind TK_BINOPS[TK_BINOPS_LEN] = {
     TK_FNPIPE, TK_ADD, TK_SUB, TK_MUL, TK_DIV, TK_MOD, TK_NOT, TK_AND,
     TK_OR,     TK_LT,  TK_LEQ, TK_GT,  TK_GEQ, TK_EQ,  TK_NEQ};
 
-#define TK_EXPR_TERMINATORS_LEN 5
+#define TK_EXPR_TERMINATORS_LEN 8
 static const TokenKind TK_EXPR_TERMINATORS[TK_EXPR_TERMINATORS_LEN] = {
-    TK_RPAREN, TK_RSQUARE, TK_COMMA, TK_IN, TK_EOF};
+    TK_RPAREN, TK_RSQUARE, TK_RCURLY, TK_COMMA,
+    TK_IN,     TK_THEN,    TK_ELSE,   TK_EOF};
 
-#define BINOPS_AND_EXPR_TERMINATORS_LEN 26
-static const TokenKind
-    BINOPS_AND_EXPR_TERMINATORS[BINOPS_AND_EXPR_TERMINATORS_LEN] = {
-        TK_FNPIPE, TK_ADD,     TK_SUB,     TK_MUL, TK_DIV, TK_MOD, TK_NOT,
-        TK_AND,    TK_OR,      TK_LT,      TK_LEQ, TK_GT,  TK_GEQ, TK_EQ,
-        TK_NEQ,    TK_LPAREN,  TK_LSQUARE, TK_LET, TK_FUN, TK_SUB, TK_NOT,
-        TK_RPAREN, TK_RSQUARE, TK_COMMA,   TK_IN,  TK_EOF};
-
-Parser new_parser(const char *file_name, const String source) {
+Parser Parser_new(const String file_name, const String source) {
     return (Parser){
         .file_name = file_name,
         .source = source,
@@ -58,15 +48,6 @@ static inline Token *peek(Parser *self) {
 
 static inline Token next(Parser *self) {
     return Lexer_next_token(&self->lexer);
-}
-
-static bool in(TokenKind tk, const TokenKind list[], size_t len) {
-    bool contains = false;
-    for (size_t i = 0; i < len; i++) {
-        if (list[i] == tk)
-            contains = true;
-    }
-    return contains;
 }
 
 static double parse_number(Parser *self, Span span) {
@@ -91,11 +72,6 @@ static double parse_number(Parser *self, Span span) {
 
 static ParseStringResult parse_string(Parser *self, Span span) {
     const char *str = self->lexer.source.buffer + span.start;
-
-    // Alloc enough space for the contents (i.e. minus the start and end
-    // quotes, plus the null terminator) of the string in the source,
-    // which means we might allocate in excess if has escape codes, but
-    // who cares
     StringBuf buffer = StringBuf_new();
 
     size_t index = 0;
@@ -160,17 +136,18 @@ static ASTResult parse_literal(Parser *self) {
 
     switch (current.kind) {
     case TK_UNIT:
-        lit = (AST_Literal){LITERAL_UNIT, {.unit = NULL}};
+        lit = (AST_Literal){.tag = LITERAL_UNIT};
         break;
     case TK_TRUE:
-        lit = (AST_Literal){LITERAL_BOOL, {.boolean = true}};
+        lit = (AST_Literal){.tag = LITERAL_BOOL, .value = {.boolean = true}};
         break;
     case TK_FALSE:
-        lit = (AST_Literal){LITERAL_BOOL, {.boolean = false}};
+        lit = (AST_Literal){.tag = LITERAL_BOOL, .value = {.boolean = false}};
         break;
     case TK_NUMBER:
-        lit = (AST_Literal){LITERAL_NUMBER,
-                            {.number = parse_number(self, current.span)}};
+        lit = (AST_Literal){
+            .tag = LITERAL_NUMBER,
+            .value = {.number = parse_number(self, current.span)}};
         break;
     case TK_STRING: {
         StringBuf string;
@@ -276,7 +253,7 @@ static ParseResult parse_abstraction(Parser *self) {
     RET_ERR(TokenResult, expect(self, TK_ARROW));
 
     ASTIndex abs;
-    RET_ERR_ASSIGN(abs, ParseResult, parse_expr(self));
+    RET_ERR_ASSIGN(abs, ParseResult, Parser_parse_expr(self));
     Span abs_span = {.start = fun_token.span.start,
                      .end = self->ast_arena.buffer[abs].span.end};
     for (size_t i = args.length; i > 0; i--) {
@@ -304,6 +281,52 @@ FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
+static ASTResult parse_print(Parser *self) {
+    SyntaxError error;
+    Span span = {.start = next(self).span.start};
+    ASTIndex expr;
+    RET_ERR_ASSIGN(expr, ParseResult, Parser_parse_expr(self));
+    span.end = self->ast_arena.buffer[expr].span.end;
+    AST print = {
+        .tag = AST_PRINT,
+        .value = {.print =
+                      {
+                          .expr = expr,
+                      }},
+        .span = span,
+    };
+    return (ASTResult){.tag = RESULT_OK, .value = {.ok = print}};
+FAILURE:
+    return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
+}
+
+static ASTResult parse_if_then(Parser *self) {
+    SyntaxError error;
+    Span span = (Span){.start = next(self).span.start};
+    ASTIndex cond;
+    RET_ERR_ASSIGN(cond, ParseResult, Parser_parse_expr(self));
+    RET_ERR(TokenResult, expect(self, TK_THEN));
+    ASTIndex then;
+    RET_ERR_ASSIGN(then, ParseResult, Parser_parse_expr(self));
+    RET_ERR(TokenResult, expect(self, TK_ELSE));
+    ASTIndex else_;
+    RET_ERR_ASSIGN(else_, ParseResult, Parser_parse_expr(self));
+    span.end = self->ast_arena.buffer[else_].span.end;
+    AST if_then = {
+        .tag = AST_IF_ELSE,
+        .value = {.if_else =
+                      {
+                          .condition = cond,
+                          .then = then,
+                          .else_ = else_,
+                      }},
+        .span = span,
+    };
+    return (ASTResult){.tag = RESULT_OK, .value = {.ok = if_then}};
+FAILURE:
+    return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
+}
+
 static ASTResult parse_let_binding(Parser *self) {
     SyntaxError error;
     Span span = (Span){.start = next(self).span.start};
@@ -314,7 +337,7 @@ static ASTResult parse_let_binding(Parser *self) {
                         .length = ident_span.end - ident_span.start};
         RET_ERR(TokenResult, expect(self, TK_ASSIGN));
         ASTIndex value;
-        RET_ERR_ASSIGN(value, ParseResult, parse_expr(self));
+        RET_ERR_ASSIGN(value, ParseResult, Parser_parse_expr(self));
         AST_LetBindVec_push(&binds, (AST_LetBind){ident, value});
         Token *peeked = peek(self);
         if (peeked->kind == TK_COMMA) {
@@ -323,7 +346,7 @@ static ASTResult parse_let_binding(Parser *self) {
     }
     RET_ERR(TokenResult, expect(self, TK_IN));
     ASTIndex body;
-    RET_ERR_ASSIGN(body, ParseResult, parse_expr(self));
+    RET_ERR_ASSIGN(body, ParseResult, Parser_parse_expr(self));
     span.end = self->ast_arena.buffer[body].span.end;
     AST let_in = (AST){
         .tag = AST_LET_IN,
@@ -340,13 +363,14 @@ static ASTResult parse_unop(Parser *self) {
     SyntaxError error;
     Token op_token = next(self);
     Span op_span = op_token.span;
-    // The tokenkind is checked before calling so we can safely cast
+    // The TokenKind is checked before calling, so we can safely cast
     AST_UnOp op = (AST_UnOp)op_token.kind;
     ASTIndex operand;
-    RET_ERR_ASSIGN(operand, ParseResult, parse_expr(self));
-    AST unop =
-        (AST){.tag = AST_UNARY_OP,
-              .value = {.unary_op = (AST_UnaryOp){op_span, op, operand}}};
+    RET_ERR_ASSIGN(operand, ParseResult, Parser_parse_expr(self));
+    AST unop = (AST){.tag = AST_UNARY_OP,
+                     .value = {.unary_op = (AST_UnaryOp){op_span, op, operand}},
+                     .span = {.start = op_span.start,
+                              .end = self->ast_arena.buffer[operand].span.end}};
     return (ASTResult){.tag = RESULT_OK, .value = {.ok = unop}};
 FAILURE:
     return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
@@ -356,28 +380,28 @@ static ASTResult parse_list(Parser *self) {
     SyntaxError error;
     Span list_span = (Span){.start = next(self).span.start};
     AST_List items = AST_List_new();
-    while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RSQUARE}, 2)) {
+    while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RCURLY}, 2)) {
         ASTIndex item;
-        RET_ERR_ASSIGN(item, ParseResult, parse_expr(self));
+        RET_ERR_ASSIGN(item, ParseResult, Parser_parse_expr(self));
         AST_List_push(&items, item);
-        TokenKind peeked = peek(self)->kind;
-        if (peeked == TK_COMMA) {
+        if (at(self, TK_COMMA)) {
             next(self);
-        } else if (peeked == TK_RSQUARE) {
+        } else if (at(self, TK_RCURLY)) {
             break;
         } else {
             error = (SyntaxError){
                 .tag = ERROR_UNEXPECTED_TOKEN,
-                .error = {.unexpected_token = {.expected = STR("',' or ']'"),
+                .error = {.unexpected_token = {.expected = STR("',' or '}'"),
                                                .got = next(self),
                                                .span = current_span(self)}}};
             goto FAILURE;
         }
     }
     list_span.end = next(self).span.end;
-    return (ASTResult){
-        .tag = RESULT_OK,
-        .value = {.ok = (AST){.tag = AST_LIST, .value = {.list = items}}}};
+    return (ASTResult){.tag = RESULT_OK,
+                       .value = {.ok = (AST){.tag = AST_LIST,
+                                             .value = {.list = items},
+                                             .span = list_span}}};
 FAILURE:
     AST_List_free(&items);
     return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
@@ -388,7 +412,7 @@ static ParseResult parse_list_index(Parser *self, ASTIndex list) {
     // skip [
     next(self);
     ASTIndex index;
-    RET_ERR_ASSIGN(index, ParseResult, parse_expr(self));
+    RET_ERR_ASSIGN(index, ParseResult, Parser_parse_expr(self));
     Token rsquare;
     RET_ERR_ASSIGN(rsquare, TokenResult, expect(self, TK_RSQUARE));
     AST expr = {.tag = AST_LIST,
@@ -401,7 +425,7 @@ FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
-static ParseResult parse_operand(Parser *self) {
+static ParseResult parse_simple_expr(Parser *self) {
     SyntaxError error;
     ASTIndex lhs;
     switch (peek(self)->kind) {
@@ -420,13 +444,7 @@ static ParseResult parse_operand(Parser *self) {
         lhs = ASTVec_push(&self->ast_arena, lhs_ast);
         break;
     }
-    case TK_LPAREN:
-        // Skip '('
-        next(self);
-        RET_ERR_ASSIGN(lhs, ParseResult, parse_expr(self));
-        RET_ERR(TokenResult, expect(self, TK_RPAREN));
-        break;
-    case TK_LSQUARE: {
+    case TK_LCURLY: {
         AST lhs_ast;
         RET_ERR_ASSIGN(lhs_ast, ASTResult, parse_list(self));
         lhs = ASTVec_push(&self->ast_arena, lhs_ast);
@@ -438,19 +456,29 @@ static ParseResult parse_operand(Parser *self) {
         lhs = ASTVec_push(&self->ast_arena, lhs_ast);
         break;
     }
-    case TK_FUN: {
+    case TK_FUN:
         RET_ERR_ASSIGN(lhs, ParseResult, parse_abstraction(self));
         break;
-    }
-    case TK_SUB:
-    case TK_NOT: {
+    case TK_PRINT: {
         AST lhs_ast;
-        RET_ERR_ASSIGN(lhs_ast, ASTResult, parse_unop(self));
+        RET_ERR_ASSIGN(lhs_ast, ASTResult, parse_print(self));
         lhs = ASTVec_push(&self->ast_arena, lhs_ast);
         break;
     }
+    case TK_IF: {
+        AST lhs_ast;
+        RET_ERR_ASSIGN(lhs_ast, ASTResult, parse_if_then(self));
+        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
+        break;
+    }
+    case TK_LPAREN:
+        // Skip '('
+        next(self);
+        RET_ERR_ASSIGN(lhs, ParseResult, Parser_parse_expr(self));
+        RET_ERR(TokenResult, expect(self, TK_RPAREN));
+        break;
     default: {
-        fflush(stdout);
+        puts("Testing");
         return (ParseResult){
             .tag = RESULT_ERR,
             .value = {
@@ -458,15 +486,65 @@ static ParseResult parse_operand(Parser *self) {
                     .tag = ERROR_UNEXPECTED_TOKEN,
                     .error = {.unexpected_token = (SyntaxError_UnexpectedToken){
                                   .expected = STR("expression"),
-                                  .got = *peek(self),
+                                  .got = next(self),
                                   .span = current_span(self),
                               }}}}};
     }
     }
+
+    /*while (true) {
+    }*/
+
+    return (ParseResult){.tag = RESULT_OK,
+                         .value = {
+                             .ok = lhs,
+                         }};
+FAILURE:
+    return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
+}
+
+static ParseResult parse_simple_expr_or_unary_op(Parser *self) {
+    SyntaxError error;
+    ASTIndex lhs;
+    if (at_any(self, (TokenKind[]){TK_SUB, TK_NOT}, 2)) {
+        AST unop;
+        RET_ERR_ASSIGN(unop, ASTResult, parse_unop(self));
+        lhs = ASTVec_push(&self->ast_arena, unop);
+    } else
+        RET_ERR_ASSIGN(lhs, ParseResult, parse_simple_expr(self));
+    return (ParseResult){.tag = RESULT_OK, .value = {.ok = lhs}};
+FAILURE:
+    return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
+}
+
+ParseResult Parser_parse_expr(Parser *self) {
+    SyntaxError error;
+    ASTIndex lhs;
+    RET_ERR_ASSIGN(lhs, ParseResult, parse_simple_expr_or_unary_op(self));
+
     while (true) {
-        if (at_any(self, TK_EXPR, TK_EXPR_LEN)) {
+        if (at_any(self, TK_BINOPS, TK_BINOPS_LEN)) {
+            Token binop = next(self);
+            ASTIndex rhs;
+            RET_ERR_ASSIGN(rhs, ParseResult,
+                           parse_simple_expr_or_unary_op(self));
+            AST binary_op = {
+                .tag = AST_BINARY_OP,
+                .value = {.binary_op =
+                              {
+                                  .op_span = binop.span,
+                                  .op = (AST_BinOp)binop.kind,
+                                  .lhs = lhs,
+                                  .rhs = rhs,
+                              }},
+                .span = {.start = self->ast_arena.buffer[lhs].span.start,
+                         .end = self->ast_arena.buffer[rhs].span.end}};
+            lhs = ASTVec_push(&self->ast_arena, binary_op);
+        } else if (at(self, TK_LSQUARE)) {
+            RET_ERR_ASSIGN(lhs, ParseResult, parse_list_index(self, lhs));
+        } else if (at_any(self, TK_EXPR, TK_EXPR_LEN)) {
             ASTIndex argument;
-            RET_ERR_ASSIGN(argument, ParseResult, parse_expr(self));
+            RET_ERR_ASSIGN(argument, ParseResult, parse_simple_expr(self));
 
             AST lhs_ast = {.tag = AST_APPLICATION,
                            .value =
@@ -482,69 +560,20 @@ static ParseResult parse_operand(Parser *self) {
                                .end = self->ast_arena.buffer[argument].span.end,
                            }};
             lhs = ASTVec_push(&self->ast_arena, lhs_ast);
-        }
-        if (at(self, TK_LSQUARE)) {
-            RET_ERR_ASSIGN(lhs, ParseResult, parse_list_index(self, lhs));
-        }
-        if (at_any(self, BINOPS_AND_EXPR_TERMINATORS,
-                   BINOPS_AND_EXPR_TERMINATORS_LEN)) {
+        } else if (at_any(self, TK_EXPR_TERMINATORS, TK_EXPR_TERMINATORS_LEN))
             break;
-        }
-        if (peek(self)->kind == TK_LSQUARE) {
-            continue;
-        } else {
-            return (ParseResult){
-                .tag = RESULT_ERR,
-                .value = {.err = {.tag = ERROR_UNEXPECTED_TOKEN,
-                                  .error = {.unexpected_token = {
-                                                .expected = STR("expression"),
-                                                .got = next(self),
-                                                .span = current_span(self)}}}}};
-        }
-    }
-    return (ParseResult){.tag = RESULT_OK,
-                         .value = {
-                             .ok = lhs,
-                         }};
-FAILURE:
-    return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
-}
-
-ParseResult parse_expr(Parser *self) {
-    SyntaxError error;
-    ASTIndex lhs;
-    RET_ERR_ASSIGN(lhs, ParseResult, parse_operand(self));
-
-    while (true) {
-        Token *peeked = peek(self);
-        Token op;
-        if (in(peeked->kind, TK_BINOPS, TK_BINOPS_LEN)) {
-            op = next(self);
-        } else if (in(peeked->kind, TK_EXPR_TERMINATORS,
-                      TK_EXPR_TERMINATORS_LEN)) {
-            break;
-        } else {
-            next(self);
+        else {
             return (ParseResult){
                 .tag = RESULT_ERR,
                 .value = {
-                    .err = {
-                        .tag = ERROR_UNEXPECTED_TOKEN,
-                        .error = {.unexpected_token = {
-                                      .expected = STR(
-                                          "operator or expression terminator"),
-                                      .got = next(self),
-                                      .span = current_span(self)}}}}};
+                    .err = {.tag = ERROR_UNEXPECTED_TOKEN,
+                            .error = {
+                                .unexpected_token = {
+                                    .expected = STR(
+                                        "expression or expression terminator"),
+                                    .got = next(self),
+                                    .span = current_span(self)}}}}};
         }
-
-        ASTIndex rhs;
-        RET_ERR_ASSIGN(rhs, ParseResult, parse_operand(self));
-        AST lhs_ast = (AST){
-            .tag = AST_BINARY_OP,
-            .value = {
-                .binary_op = (AST_BinaryOp){
-                    .op_span = op.span, .op = (AST_BinOp)op.kind, lhs, rhs}}};
-        lhs = ASTVec_push(&self->ast_arena, lhs_ast);
     }
 
     return (ParseResult){
@@ -578,6 +607,7 @@ void Parser_free(Parser *self) {
         case AST_IDENT:
         case AST_ABSTRACTION:
         case AST_APPLICATION:
+        case AST_PRINT:
         case AST_IF_ELSE:
         case AST_UNARY_OP:
         case AST_BINARY_OP:
@@ -619,13 +649,12 @@ static LineInfo get_line_nums(String source, size_t span_start) {
     return result;
 }
 
-static void dump_info(LineInfo info, Span span) {
+/*static void dump_info(LineInfo info, Span span) {
     fflush(stderr);
-    printf("span_start: %zu, span_end: %zu, line_num: %zu, line_start: %zu, "
-           "line_end: %zu\n",
-           span.start, span.end, info.line_num, info.line_start, info.line_end);
-    fflush(stdout);
-}
+    printf("span_start: %zu, span_end: %zu, line_num: %zu, line_start: %zu,
+" "line_end: %zu\n", span.start, span.end, info.line_num, info.line_start,
+info.line_end); fflush(stdout);
+}*/
 
 static inline void write_repeat(char c, size_t n, FILE *stream) {
     for (size_t i = 0; i < n; i++)
@@ -638,7 +667,7 @@ static inline void write_num(size_t n, FILE *stream) {
     fputc(n % 10 + '0', stream);
 }
 
-void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
+void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream) {
     fputs("\x1b[31;1mError\x1b[0m: ", stream);
     Span span;
     switch (error.tag) {
@@ -657,9 +686,7 @@ void SyntaxError_print_diag(Parser *self, SyntaxError error, FILE *stream) {
     size_t num_digits = floor(log10((double)line_info.line_num) + 1.0);
     write_repeat(' ', num_digits + 2, stream);
     fputs("\x1b[37m┌─[\x1b[0m", stream);
-    String_write(
-        (String){.buffer = self->file_name, .length = strlen(self->file_name)},
-        stream);
+    String_write(self->file_name, stream);
     fputc(':', stream);
     write_num(line_info.line_num, stream);
     fputc(':', stream);
