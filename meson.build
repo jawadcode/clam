@@ -15,12 +15,13 @@ add_project_arguments('-ftime-trace', language: 'c')
 executable(
   'clam',
   sources : [
-    'src/ast.c',
+    'src/memory.c',
     'src/common.c',
     'src/lexer.c',
+    'src/ast.c',
+    'src/parser.c',
+    'src/vm.c',
     'src/main.c',
-    'src/memory.c',
-    'src/parser.c'
   ],
   dependencies : m_dep
 )
