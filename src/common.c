@@ -13,6 +13,7 @@ void String_write(String string, FILE *file) {
 }
 
 DEF_VEC(char, StringBuf)
+VEC_WITH_CAP(char, StringBuf)
 
 void StringBuf_push_string(StringBuf *buf, String string) {
     size_t old_length = buf->length;

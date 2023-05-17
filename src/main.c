@@ -1,4 +1,3 @@
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,8 +43,9 @@ void run_cmd(const String cmd) {
             goto UNKNOWN_COMMAND;
     UNKNOWN_COMMAND:
     default:
-        fputs("Error: Unknown command ", stderr);
+        fputs("\x1b[31;1mError\x1b[0m: Unknown command '", stderr);
         String_print(cmd);
+        putchar('\'');
         print_help();
         break;
     }
@@ -54,10 +54,10 @@ void run_cmd(const String cmd) {
 void run(const String source) {
     Parser parser = Parser_new(STR("stdin"), source);
     puts("Lexer Output:");
-    /*for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
+    for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
          tok = Lexer_next_token(&parser.lexer))
         Token_print(parser.source, tok);
-    parser.lexer = Lexer_new(parser.source);*/
+    parser.lexer = Lexer_new(parser.source);
     ParseResult result = Parser_parse_expr(&parser);
     putchar('\n');
     switch (result.tag) {
@@ -81,10 +81,10 @@ void run(const String source) {
 
 StringBuf read_line() {
     StringBuf str = StringBuf_new();
-    char c = fgetc(stdin);
+    char c = (char)fgetc(stdin);
     while (c != '\n' && c != EOF) {
         StringBuf_push(&str, c);
-        c = fgetc(stdin);
+        c = (char)fgetc(stdin);
     }
     if (c == EOF)
         exit(0);
@@ -93,7 +93,7 @@ StringBuf read_line() {
     return str;
 }
 
-void repl(void) {
+[[noreturn]] void repl(void) {
     while (true) {
         fputs("$ ", stdout);
         fflush(stdout);

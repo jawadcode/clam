@@ -72,7 +72,9 @@ static double parse_number(Parser *self, Span span) {
 
 static ParseStringResult parse_string(Parser *self, Span span) {
     const char *str = self->lexer.source.buffer + span.start;
-    StringBuf buffer = StringBuf_new();
+    // The parsed string will always be less than or equal to the length - 2
+    // (for the quotes)
+    StringBuf buffer = StringBuf_with_capacity((span.end - span.start) - 2);
 
     size_t index = 0;
     bool escaped = false;
@@ -117,6 +119,7 @@ static ParseStringResult parse_string(Parser *self, Span span) {
                 };
             }
             }
+            escaped = false;
         } else if (str[index] == '\\') {
             escaped = true;
         } else {
@@ -228,7 +231,7 @@ static bool at(Parser *self, TokenKind kind) {
     return peek(self)->kind == kind;
 }
 
-static bool at_any(Parser *self, const TokenKind *list, size_t length) {
+static bool at_any(Parser *self, const TokenKind list[], size_t length) {
     Token *current = peek(self);
 
     for (size_t i = 0; i < length; i++)
@@ -363,8 +366,7 @@ static ASTResult parse_unop(Parser *self) {
     SyntaxError error;
     Token op_token = next(self);
     Span op_span = op_token.span;
-    // The TokenKind is checked before calling, so we can safely cast
-    AST_UnOp op = (AST_UnOp)op_token.kind;
+    AST_UnOp op = op_token.kind == TK_NOT ? AST_UNOP_NOT : AST_UNOP_NEGATE;
     ASTIndex operand;
     RET_ERR_ASSIGN(operand, ParseResult, Parser_parse_expr(self));
     AST unop = (AST){.tag = AST_UNARY_OP,
@@ -413,12 +415,12 @@ static ParseResult parse_list_index(Parser *self, ASTIndex list) {
     next(self);
     ASTIndex index;
     RET_ERR_ASSIGN(index, ParseResult, Parser_parse_expr(self));
-    Token rsquare;
-    RET_ERR_ASSIGN(rsquare, TokenResult, expect(self, TK_RSQUARE));
+    Token r_square;
+    RET_ERR_ASSIGN(r_square, TokenResult, expect(self, TK_RSQUARE));
     AST expr = {.tag = AST_LIST,
                 .value = {.list_index = {list, index}},
                 .span = {.start = self->ast_arena.buffer[list].span.start,
-                         .end = rsquare.span.end}};
+                         .end = r_square.span.end}};
     return (ParseResult){.tag = RESULT_OK,
                          .value = {.ok = ASTVec_push(&self->ast_arena, expr)}};
 FAILURE:
@@ -649,13 +651,6 @@ static LineInfo get_line_nums(String source, size_t span_start) {
     return result;
 }
 
-/*static void dump_info(LineInfo info, Span span) {
-    fflush(stderr);
-    printf("span_start: %zu, span_end: %zu, line_num: %zu, line_start: %zu,
-" "line_end: %zu\n", span.start, span.end, info.line_num, info.line_start,
-info.line_end); fflush(stdout);
-}*/
-
 static inline void write_repeat(char c, size_t n, FILE *stream) {
     for (size_t i = 0; i < n; i++)
         fputc(c, stream);
@@ -664,7 +659,7 @@ static inline void write_repeat(char c, size_t n, FILE *stream) {
 static inline void write_num(size_t n, FILE *stream) {
     if (n / 10)
         write_num(n / 10, stream);
-    fputc(n % 10 + '0', stream);
+    fputc((int)n % 10 + '0', stream);
 }
 
 void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream) {

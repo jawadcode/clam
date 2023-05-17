@@ -122,9 +122,9 @@ static TokenKind ident_type(Lexer *lexer) {
         }
     case 'u':
         return check_kw(lexer, 1, STR("nit"), TK_UNIT);
-    default:
-        return TK_IDENT;
     }
+
+    return TK_IDENT;
 }
 
 static TokenKind ident(Lexer *lexer) {
@@ -325,7 +325,7 @@ String TK_to_string(TokenKind kind) {
     case TK_MOD:
         return STR("%");
     case TK_NOT:
-        return STR("!");
+        return STR("not");
     case TK_AND:
         return STR("and");
     case TK_OR:

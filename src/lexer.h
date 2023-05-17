@@ -69,7 +69,7 @@ typedef struct {
     Span span;
 } Token;
 
-// Uninitialised if 'tag == MAYBE_NONE' and intialised if 'tag == MAYBE_SOME'
+// Uninitialised if 'tag == MAYBE_NONE' and initialised if 'tag == MAYBE_SOME'
 typedef struct {
     enum {
         MAYBE_SOME,

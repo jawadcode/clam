@@ -16,11 +16,12 @@ DECL_VEC_HEADER(ASTIndex, AST_List)
 
 // A literal, e.g: 'unit', 'true', '0.123' and '"a string"'
 typedef struct AST_Literal {
+    // The values should match up with VM_ValueTag
     enum AST_LiteralTag {
-        LITERAL_UNIT,
-        LITERAL_BOOL,
-        LITERAL_NUMBER,
-        LITERAL_STRING,
+        LITERAL_UNIT = 0,
+        LITERAL_BOOL = 1,
+        LITERAL_NUMBER = 2,
+        LITERAL_STRING = 3,
     } tag;
     union AST_LiteralUnion {
         bool boolean;
@@ -74,10 +75,11 @@ typedef struct AST_IfElse {
 } AST_IfElse;
 
 // A binary operation, with a value matching that of the corresponding
-// enumeration in 'TokenKind' so we can safely cast from it
+// enumeration in 'VM_Op' so we can safely cast to it (doesn't match with
+// 'TokenKind' because 'TK_SUB' is used by 'BINOP_SUB')
 typedef enum AST_UnOp {
-    AST_UNOP_NOT = 26,
-    AST_UNOP_NEGATE = 22,
+    AST_UNOP_NOT = 28,
+    AST_UNOP_NEGATE = 40,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
@@ -123,7 +125,7 @@ typedef struct AST_ListIndex {
     ASTIndex index;
 } AST_ListIndex;
 
-// The *A*bstract *S*yntax *T*ree
+// The Abstract Syntax Tree
 typedef struct AST {
     enum ASTTag {
         AST_LITERAL,

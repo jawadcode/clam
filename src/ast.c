@@ -36,15 +36,17 @@ static String binop_to_string(AST_BinOp op) {
         return STR("==");
     case BINOP_NEQ:
         return STR("!=");
+        UNREACHABLE;
     }
 }
 
 static String unop_to_string(AST_UnOp op) {
     switch (op) {
     case AST_UNOP_NOT:
-        return STR("!");
+        return STR("not");
     case AST_UNOP_NEGATE:
         return STR("-");
+        UNREACHABLE;
     }
 }
 
@@ -55,7 +57,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         AST_Literal *literal = &node->value.literal;
         switch (literal->tag) {
         case LITERAL_UNIT:
-            StringBuf_push_string(buf, STR("()"));
+            StringBuf_push_string(buf, STR("unit"));
             break;
         case LITERAL_BOOL:
             StringBuf_push_string(buf, literal->value.boolean ? STR("true")
@@ -67,8 +69,8 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
             snprintf(num, 20, "%f", literal->value.number);
             StringBuf_push_string(buf,
                                   (String){.buffer = num,
-                                           // 20 isn't necessarily the length of
-                                           // 'num', it may well use less
+                                           // 20 is the maximum length, the null
+                                           // terminator may occur before then
                                            .length = strlen(num)});
             break;
         }
@@ -166,7 +168,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ' ');
         format_ast_node(arena, binop->rhs, buf);
         StringBuf_push(buf, ')');
-        // I hate writing switch statements
+        // Definitely didn't miss this out originally and cause UB 👀
         break;
     }
     case AST_LIST_INDEX: {

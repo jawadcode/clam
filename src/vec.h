@@ -20,6 +20,14 @@
         };                                                                     \
     }
 
+#define VEC_WITH_CAP_SIG(T, Name) Name Name##_with_capacity(size_t capacity);
+#define VEC_WITH_CAP(T, Name)                                                  \
+    Name Name##_with_capacity(size_t capacity) {                               \
+        return (Name){.buffer = (T *)reallocate(NULL, sizeof(T) * capacity),   \
+                      .length = 0,                                             \
+                      .capacity = capacity};                                   \
+    }
+
 #define VEC_PUSH_SIG(T, Name) size_t Name##_push(Name *array, T value);
 #define VEC_PUSH(T, Name)                                                      \
     size_t Name##_push(Name *array, T value) {                                 \

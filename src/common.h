@@ -57,6 +57,11 @@ void String_write(String string, FILE *file);
 
 DECL_VEC_HEADER(char, StringBuf)
 
+VEC_WITH_CAP_SIG(char, StringBuf)
+
+#define BUF_TO_STR(x)                                                          \
+    (String) { .buffer = (x).buffer, .length = (x).length }
+
 void StringBuf_push_string(StringBuf *buf, String string);
 
 void StringBuf_print(StringBuf buf);

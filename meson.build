@@ -10,8 +10,6 @@ project(
 cc = meson.get_compiler('c')
 m_dep = cc.find_library('m', required : true)
 
-add_project_arguments('-ftime-trace', language: 'c')
-
 executable(
   'clam',
   sources : [
@@ -20,6 +18,7 @@ executable(
     'src/lexer.c',
     'src/ast.c',
     'src/parser.c',
+    'src/compiler.c',
     'src/vm.c',
     'src/main.c',
   ],
