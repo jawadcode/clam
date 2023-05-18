@@ -55,6 +55,8 @@ void String_print(String string);
 
 void String_write(String string, FILE *file);
 
+bool String_eq(String a, String b);
+
 DECL_VEC_HEADER(char, StringBuf)
 
 VEC_WITH_CAP_SIG(char, StringBuf)

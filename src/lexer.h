@@ -1,10 +1,11 @@
 #ifndef CLAM_LEXER_H
 #define CLAM_LEXER_H
 
-#include "common.h"
-#include "vec.h"
 #include <stdint.h>
 #include <stdlib.h>
+
+#include "common.h"
+#include "vec.h"
 
 // An enumeration of the different kinds of tokens
 typedef enum {
@@ -36,31 +37,33 @@ typedef enum {
     TK_RCURLY = 20,  // "}"
     TK_COMMA = 21,   // ","
     TK_FNPIPE = 22,  // "|>"
+    TK_APPEND = 23,  // "::"
+    TK_CONCAT = 24,  // "++"
 
     /* ARITHMETIC OPS */
     // TK_SUB (unary)
-    TK_ADD = 23, // "+"
-    TK_SUB = 24, // "-"
-    TK_MUL = 25, // "*"
-    TK_DIV = 26, // "/"
-    TK_MOD = 27, // "%"
+    TK_ADD = 25, // "+"
+    TK_SUB = 26, // "-"
+    TK_MUL = 27, // "*"
+    TK_DIV = 28, // "/"
+    TK_MOD = 29, // "%"
 
     /* BOOLEAN OPS */
-    TK_NOT = 28, // "not"
-    TK_AND = 29, // "and"
-    TK_OR = 30,  // "or"
+    TK_NOT = 30, // "not"
+    TK_AND = 31, // "and"
+    TK_OR = 32,  // "or"
 
     /* COMPARISON OPS */
-    TK_LT = 31,  // "<"
-    TK_LEQ = 32, // "<="
-    TK_GT = 33,  // ">"
-    TK_GEQ = 34, // ">="
-    TK_EQ = 35,  // "=="
-    TK_NEQ = 36, // "!="
+    TK_LT = 33,  // "<"
+    TK_LEQ = 34, // "<="
+    TK_GT = 35,  // ">"
+    TK_GEQ = 36, // ">="
+    TK_EQ = 37,  // "=="
+    TK_NEQ = 38, // "!="
 
     /* SPECIAL */
-    TK_INVALID = 37, // Invalid token
-    TK_EOF = 38,     // End Of File
+    TK_INVALID = 39, // Invalid token
+    TK_EOF = 40,     // End Of File
 } TokenKind;
 
 // A singular token
@@ -103,7 +106,7 @@ Token Lexer_next_token(Lexer *lexer);
 String TK_to_string(TokenKind kind);
 
 // Get the token as a slice of the source string
-String Token_to_string(Lexer lexer, Token token);
+String Token_to_string(String string, Token token);
 
 // Print a token using printf
 void Token_print(const String source, Token token);

@@ -88,12 +88,11 @@ StringBuf read_line() {
     }
     if (c == EOF)
         exit(0);
-    // Ideally we could remove this but the lexer depends on it
     StringBuf_push(&str, '\0');
     return str;
 }
 
-[[noreturn]] void repl(void) {
+void repl(void) {
     while (true) {
         fputs("$ ", stdout);
         fflush(stdout);

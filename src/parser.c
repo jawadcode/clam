@@ -23,10 +23,11 @@ static const TokenKind TK_EXPR[TK_EXPR_LEN] = {
     TK_UNIT,   TK_TRUE,   TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
     TK_LPAREN, TK_LCURLY, TK_LET,   TK_IF,     TK_FUN};
 
-#define TK_BINOPS_LEN 15
+#define TK_BINOPS_LEN 17
 static const TokenKind TK_BINOPS[TK_BINOPS_LEN] = {
-    TK_FNPIPE, TK_ADD, TK_SUB, TK_MUL, TK_DIV, TK_MOD, TK_NOT, TK_AND,
-    TK_OR,     TK_LT,  TK_LEQ, TK_GT,  TK_GEQ, TK_EQ,  TK_NEQ};
+    TK_FNPIPE, TK_APPEND, TK_CONCAT, TK_ADD, TK_SUB, TK_MUL,
+    TK_DIV,    TK_MOD,    TK_NOT,    TK_AND, TK_OR,  TK_LT,
+    TK_LEQ,    TK_GT,     TK_GEQ,    TK_EQ,  TK_NEQ};
 
 #define TK_EXPR_TERMINATORS_LEN 8
 static const TokenKind TK_EXPR_TERMINATORS[TK_EXPR_TERMINATORS_LEN] = {
@@ -247,11 +248,11 @@ static ParseResult parse_abstraction(Parser *self) {
     StringVec args = StringVec_new();
     Token first_param_token;
     RET_ERR_ASSIGN(first_param_token, TokenResult, expect(self, TK_IDENT));
-    StringVec_push(&args, Token_to_string(self->lexer, first_param_token));
+    StringVec_push(&args, Token_to_string(self->source, first_param_token));
 
     while (at(self, TK_IDENT)) {
         Token arg_token = next(self);
-        StringVec_push(&args, Token_to_string(self->lexer, arg_token));
+        StringVec_push(&args, Token_to_string(self->source, arg_token));
     }
     RET_ERR(TokenResult, expect(self, TK_ARROW));
 

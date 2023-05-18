@@ -212,8 +212,12 @@ TokenKind next_kind(Lexer *lexer) {
             return TK_RCURLY;
         case ',':
             return TK_COMMA;
+        case '|':
+            return match(lexer, '>') ? TK_FNPIPE : TK_INVALID;
+        case ':':
+            return match(lexer, ':') ? TK_APPEND : TK_INVALID;
         case '+':
-            return TK_ADD;
+            return match(lexer, '+') ? TK_CONCAT : TK_ADD;
         case '-':
             return TK_SUB;
         case '*':
@@ -314,6 +318,10 @@ String TK_to_string(TokenKind kind) {
         return STR(",");
     case TK_FNPIPE:
         return STR("|>");
+    case TK_APPEND:
+        return STR("::");
+    case TK_CONCAT:
+        return STR("++");
     case TK_ADD:
         return STR("+");
     case TK_SUB:
@@ -349,9 +357,9 @@ String TK_to_string(TokenKind kind) {
     }
 }
 
-String Token_to_string(Lexer lexer, Token token) {
+String Token_to_string(const String source, Token token) {
     return (String){
-        .buffer = lexer.source.buffer + token.span.start,
+        .buffer = source.buffer + token.span.start,
         .length = token.span.end - token.span.start,
     };
 }

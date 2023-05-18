@@ -1,13 +1,14 @@
 #ifndef CLAM_AST_H
 #define CLAM_AST_H
 
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+
 #include "common.h"
 #include "lexer.h"
 #include "result.h"
 #include "vec.h"
-#include <math.h>
-#include <stdbool.h>
-#include <stdint.h>
 
 // A type alias which represents the index into the arena of nodes
 typedef size_t ASTIndex;
@@ -78,8 +79,8 @@ typedef struct AST_IfElse {
 // enumeration in 'VM_Op' so we can safely cast to it (doesn't match with
 // 'TokenKind' because 'TK_SUB' is used by 'BINOP_SUB')
 typedef enum AST_UnOp {
-    AST_UNOP_NOT = 28,
-    AST_UNOP_NEGATE = 40,
+    AST_UNOP_NOT = 30,
+    AST_UNOP_NEGATE = 41,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
@@ -94,21 +95,21 @@ typedef struct AST_UnaryOp {
 typedef enum AST_BinOp {
     BINOP_FNPIPE = 22,
 
-    BINOP_ADD = 23,
-    BINOP_SUB = 24,
-    BINOP_MUL = 25,
-    BINOP_DIV = 26,
-    BINOP_MOD = 27,
+    BINOP_ADD = 25,
+    BINOP_SUB = 26,
+    BINOP_MUL = 27,
+    BINOP_DIV = 28,
+    BINOP_MOD = 29,
 
-    BINOP_AND = 29,
-    BINOP_OR = 30,
+    BINOP_AND = 31,
+    BINOP_OR = 32,
 
-    BINOP_LT = 31,
-    BINOP_LEQ = 32,
-    BINOP_GT = 33,
-    BINOP_GEQ = 34,
-    BINOP_EQ = 35,
-    BINOP_NEQ = 36,
+    BINOP_LT = 33,
+    BINOP_LEQ = 34,
+    BINOP_GT = 35,
+    BINOP_GEQ = 36,
+    BINOP_EQ = 37,
+    BINOP_NEQ = 38,
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'

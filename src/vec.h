@@ -28,27 +28,27 @@
                       .capacity = capacity};                                   \
     }
 
-#define VEC_PUSH_SIG(T, Name) size_t Name##_push(Name *array, T value);
+#define VEC_PUSH_SIG(T, Name) size_t Name##_push(Name *vec, T value);
 #define VEC_PUSH(T, Name)                                                      \
-    size_t Name##_push(Name *array, T value) {                                 \
-        if (array->capacity < array->length + 1) {                             \
-            size_t old_capacity = array->capacity;                             \
-            array->capacity = old_capacity < 8 ? 8 : old_capacity * 2;         \
-            array->buffer =                                                    \
-                (T *)reallocate(array->buffer, sizeof(T) * array->capacity);   \
+    size_t Name##_push(Name *vec, T value) {                                   \
+        if (vec->capacity < vec->length + 1) {                                 \
+            size_t old_capacity = vec->capacity;                               \
+            vec->capacity = old_capacity < 8 ? 8 : old_capacity * 2;           \
+            vec->buffer =                                                      \
+                (T *)reallocate(vec->buffer, sizeof(T) * vec->capacity);       \
         }                                                                      \
                                                                                \
-        array->buffer[array->length] = value;                                  \
-        return array->length++;                                                \
+        vec->buffer[vec->length] = value;                                      \
+        return vec->length++;                                                  \
     }
 
-#define VEC_FREE_SIG(T, Name) void Name##_free(Name *array);
+#define VEC_FREE_SIG(T, Name) void Name##_free(Name *vec);
 #define VEC_FREE(T, Name)                                                      \
-    void Name##_free(Name *array) {                                            \
-        free(array->buffer);                                                   \
-        array->buffer = NULL;                                                  \
-        array->capacity = 0;                                                   \
-        array->length = 0;                                                     \
+    void Name##_free(Name *vec) {                                              \
+        free(vec->buffer);                                                     \
+        vec->buffer = NULL;                                                    \
+        vec->capacity = 0;                                                     \
+        vec->length = 0;                                                       \
     }
 
 #define DECL_VEC_HEADER(T, Name)                                               \

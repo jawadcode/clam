@@ -1,6 +1,5 @@
 builddir
 .cache
-.clang-format
 .idea
-.replit
-replit.nix
+.vscode
+compile_commands.json

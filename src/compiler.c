@@ -1,6 +1,11 @@
-#include "compiler.h"
-#include "vm.h"
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
+
+#include "compiler.h"
+#include "lexer.h"
+#include "vec.h"
+#include "vm.h"
 
 DEF_VEC(uint16_t, CodeVec)
 DEF_VEC(VM_Value, ValueVec)
@@ -54,36 +59,60 @@ uint16_t find_or_push(ValueVec *values, AST_Literal literal) {
     }
     size_t index = ValueVec_push(values, lit_to_value(literal));
     if (index > UINT16_MAX) {
-        fputs("Reached limit on size of constants table", stderr);
+        fputs("Reached size limit on constants table (UINT16_MAX)", stderr);
         exit(1);
     } else
         return (uint16_t)index;
 }
 
+typedef struct Local {
+    Token token;
+    uint16_t depth;
+} Local;
+
+DEF_VEC_T(Local, LocalVec)
+
 typedef struct Compiler {
-    size_t local_count;
-    size_t scope_depth;
+    String source;
+    LocalVec locals;
+    uint16_t scope_depth;
 } Compiler;
 
-static VM_Chunk compile_ast(Compiler *compiler, VM_Chunk *chunk, ASTVec arena,
-                            size_t index) {
+static void compile_literal(VM_Chunk *chunk, AST_Literal literal) {
+    CodeVec_push(&chunk->code, (uint16_t)VM_OP_CONST);
+    CodeVec_push(&chunk->code,
+                 (uint16_t)find_or_push(&chunk->constants, literal));
+}
+
+static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String source,
+                          String ident) {
+    // The length of 'Compiler::locals' is guaranteed to not exceed 'UINT16_MAX'
+    for (uint16_t i = 0; i < compiler->locals.length; i++) {
+        Local local = compiler->locals.buffer[i];
+        if (String_eq(Token_to_string(source, local.token), ident)) {
+            CodeVec_push(&chunk->code, (uint16_t)VM_OP_GET);
+            CodeVec_push(&chunk->code, i);
+            return;
+        }
+    }
+
+    fputs("Variable not found: ", stderr);
+    String_write(ident, stderr);
+    fputc('\n', stderr);
+}
+
+static void compile_ast(Compiler *compiler, VM_Chunk *chunk, String source,
+                        ASTVec arena, size_t index) {
     AST ast = arena.buffer[index];
     switch (ast.tag) {
-    case AST_LITERAL: {
-        AST_Literal lit = ast.value.literal;
-        CodeVec_push(&chunk->code, (uint16_t)VM_OP_CONST);
-        CodeVec_push(&chunk->code,
-                     (uint16_t)find_or_push(&chunk->constants, lit));
-        break;
-    }
-    case AST_IDENT: {
-        break;
-    }
+    case AST_LITERAL:
+        return compile_literal(chunk, ast.value.literal);
+    case AST_IDENT:
+        return compile_ident(compiler, chunk, source, ast.value.ident);
     case AST_LIST:
         break;
     case AST_LET_IN: {
         compiler->scope_depth++;
-        compiler->local_count++;
         break;
     }
     case AST_ABSTRACTION:
@@ -103,15 +132,15 @@ static VM_Chunk compile_ast(Compiler *compiler, VM_Chunk *chunk, ASTVec arena,
     }
 }
 
-VM_Chunk compile(ASTVec arena, size_t index) {
+VM_Chunk compile(String source, ASTVec arena, size_t index) {
     Compiler compiler = {
-        .local_count = 0,
+        .locals = LocalVec_new(),
         .scope_depth = 0,
     };
     VM_Chunk chunk = {
         .constants = ValueVec_new(),
         .code = CodeVec_new(),
     };
-    compile_ast(&compiler, &chunk, arena, index);
+    compile_ast(&compiler, &chunk, source, arena, index);
     return chunk;
 }

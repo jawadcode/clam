@@ -12,6 +12,11 @@ void String_write(String string, FILE *file) {
     fwrite(string.buffer, sizeof(char), string.length, file);
 }
 
+bool String_eq(String a, String b) {
+    size_t min_len = a.length < b.length ? a.length : b.length;
+    return memcmp(a.buffer, b.buffer, min_len) == 0;
+}
+
 DEF_VEC(char, StringBuf)
 VEC_WITH_CAP(char, StringBuf)
 
