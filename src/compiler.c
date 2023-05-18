@@ -74,6 +74,7 @@ DEF_VEC_T(Local, LocalVec)
 
 typedef struct Compiler {
     String source;
+    ASTVec arena;
     LocalVec locals;
     uint16_t scope_depth;
 } Compiler;
@@ -84,12 +85,11 @@ static void compile_literal(VM_Chunk *chunk, AST_Literal literal) {
                  (uint16_t)find_or_push(&chunk->constants, literal));
 }
 
-static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String source,
-                          String ident) {
+static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String ident) {
     // The length of 'Compiler::locals' is guaranteed to not exceed 'UINT16_MAX'
     for (uint16_t i = 0; i < compiler->locals.length; i++) {
         Local local = compiler->locals.buffer[i];
-        if (String_eq(Token_to_string(source, local.token), ident)) {
+        if (String_eq(Token_to_string(compiler->source, local.token), ident)) {
             CodeVec_push(&chunk->code, (uint16_t)VM_OP_GET);
             CodeVec_push(&chunk->code, i);
             return;
@@ -101,20 +101,23 @@ static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String source,
     fputc('\n', stderr);
 }
 
-static void compile_ast(Compiler *compiler, VM_Chunk *chunk, String source,
-                        ASTVec arena, size_t index) {
+// Another beautiful demonstration of the power of stack machines, we can
+// compile lists by compiling each sub-expression and appending it to what
+// starts out as an empty list, forming our result
+static void compile_list(Compiler *compiler, VM_Chunk *chunk, AST_List list) {}
+
+static void compile_ast(Compiler *compiler, VM_Chunk *chunk, ASTVec arena,
+                        size_t index) {
     AST ast = arena.buffer[index];
     switch (ast.tag) {
     case AST_LITERAL:
         return compile_literal(chunk, ast.value.literal);
     case AST_IDENT:
-        return compile_ident(compiler, chunk, source, ast.value.ident);
+        return compile_ident(compiler, chunk, ast.value.ident);
     case AST_LIST:
+        return compile_list(compiler, chunk, ast.value.list);
+    case AST_LET_IN:
         break;
-    case AST_LET_IN: {
-        compiler->scope_depth++;
-        break;
-    }
     case AST_ABSTRACTION:
         break;
     case AST_APPLICATION:
@@ -134,6 +137,8 @@ static void compile_ast(Compiler *compiler, VM_Chunk *chunk, String source,
 
 VM_Chunk compile(String source, ASTVec arena, size_t index) {
     Compiler compiler = {
+        .source = source,
+        .arena = arena,
         .locals = LocalVec_new(),
         .scope_depth = 0,
     };
@@ -141,6 +146,6 @@ VM_Chunk compile(String source, ASTVec arena, size_t index) {
         .constants = ValueVec_new(),
         .code = CodeVec_new(),
     };
-    compile_ast(&compiler, &chunk, source, arena, index);
+    compile_ast(&compiler, &chunk, arena, index);
     return chunk;
 }
