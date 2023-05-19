@@ -26,6 +26,8 @@ typedef enum VM_Op {
     /* BINARY OPS */
     // Pops RHS from the stack, then modifies the LHS (at the top of the stack)
     // in place by applying the operation with the RHS to it
+    VM_OP_APPEND = 23,
+    VM_OP_CONCAT = 24,
     VM_OP_ADD = 25,
     VM_OP_SUB = 26,
     VM_OP_MUL = 27,
@@ -77,7 +79,10 @@ typedef struct VM_Value {
     } value;
 } VM_Value;
 
+bool VM_Value_eq(VM_Value a, VM_Value b);
+
 DECL_VEC_HEADER(uint16_t, CodeVec)
+DECL_VEC_HEADER(size_t, LineVec)
 
 // Passed to the interpreter and executed
 typedef struct VM_Chunk {
@@ -85,6 +90,8 @@ typedef struct VM_Chunk {
     ValueVec constants;
     // The actual bytecode
     CodeVec code;
+    // RLE compressed line information for 'code'
+    LineVec lines;
 } VM_Chunk;
 
 #endif

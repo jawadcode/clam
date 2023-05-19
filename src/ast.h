@@ -94,6 +94,8 @@ typedef struct AST_UnaryOp {
 // enumeration in 'TokenKind' so we can safely cast from it
 typedef enum AST_BinOp {
     BINOP_FNPIPE = 22,
+    BINOP_APPEND = 23,
+    BINOP_CONCAT = 24,
 
     BINOP_ADD = 25,
     BINOP_SUB = 26,

@@ -27,42 +27,23 @@ static VM_Value lit_to_value(AST_Literal literal) {
     }
 }
 
-uint16_t find_or_push(ValueVec *values, AST_Literal literal) {
+uint16_t find_or_push_value(ValueVec *values, VM_Value value) {
     for (size_t i = 0; i < values->length; i++) {
         VM_Value current = values->buffer[i];
-        if ((size_t)current.tag == (size_t)literal.tag) {
-            switch (literal.tag) {
-            case LITERAL_UNIT:
-                return i;
-            case LITERAL_BOOL:
-                if (current.value.boolean == literal.value.boolean)
-                    return i;
-                else
-                    break;
-            case LITERAL_NUMBER:
-                if (current.value.number == literal.value.number)
-                    return i;
-                else
-                    break;
-            case LITERAL_STRING: {
-                String curr_str = current.value.string;
-                StringBuf lit_str = literal.value.string;
-                if (curr_str.length == lit_str.length &&
-                    memcmp(curr_str.buffer, lit_str.buffer, curr_str.length) ==
-                        0)
-                    return i;
-                else
-                    break;
-            }
-            }
-        }
+        if (VM_Value_eq(current, value))
+            return i;
     }
-    size_t index = ValueVec_push(values, lit_to_value(literal));
+    size_t index = ValueVec_push(values, value);
     if (index > UINT16_MAX) {
         fputs("Reached size limit on constants table (UINT16_MAX)", stderr);
         exit(1);
     } else
         return (uint16_t)index;
+}
+
+uint16_t find_or_push_literal(ValueVec *values, AST_Literal literal) {
+    VM_Value value = lit_to_value(literal);
+    return find_or_push_value(values, value);
 }
 
 typedef struct Local {
@@ -82,7 +63,7 @@ typedef struct Compiler {
 static void compile_literal(VM_Chunk *chunk, AST_Literal literal) {
     CodeVec_push(&chunk->code, (uint16_t)VM_OP_CONST);
     CodeVec_push(&chunk->code,
-                 (uint16_t)find_or_push(&chunk->constants, literal));
+                 (uint16_t)find_or_push_literal(&chunk->constants, literal));
 }
 
 static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String ident) {
@@ -101,14 +82,33 @@ static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String ident) {
     fputc('\n', stderr);
 }
 
+static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index);
+
 // Another beautiful demonstration of the power of stack machines, we can
 // compile lists by compiling each sub-expression and appending it to what
 // starts out as an empty list, forming our result
-static void compile_list(Compiler *compiler, VM_Chunk *chunk, AST_List list) {}
+static void compile_list(Compiler *compiler, VM_Chunk *chunk, AST_List list) {
+    uint16_t empty = find_or_push_value(
+        &chunk->constants,
+        (VM_Value){.tag = VM_VALUE_LIST, .value = {.list = ValueVec_new()}});
+    CodeVec_push(&chunk->code, VM_OP_CONST);
+    CodeVec_push(&chunk->code, empty);
+    for (size_t i = 0; i < list.length; i++) {
+        ASTIndex item = list.buffer[i];
+        compile_ast(compiler, chunk, item);
+        CodeVec_push(&chunk->code, (uint16_t)VM_OP_APPEND);
+    }
+}
 
-static void compile_ast(Compiler *compiler, VM_Chunk *chunk, ASTVec arena,
-                        size_t index) {
-    AST ast = arena.buffer[index];
+static void compile_let_in(Compiler *compiler, VM_Chunk *chunk,
+                           AST_LetIn let_in) {
+    compiler->scope_depth++;
+    LocalVec_push(&compiler->locals, (Local){/* Zhu-Li, do the thing */});
+    compiler->scope_depth--;
+}
+
+static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index) {
+    AST ast = compiler->arena.buffer[index];
     switch (ast.tag) {
     case AST_LITERAL:
         return compile_literal(chunk, ast.value.literal);
@@ -117,7 +117,7 @@ static void compile_ast(Compiler *compiler, VM_Chunk *chunk, ASTVec arena,
     case AST_LIST:
         return compile_list(compiler, chunk, ast.value.list);
     case AST_LET_IN:
-        break;
+        return;
     case AST_ABSTRACTION:
         break;
     case AST_APPLICATION:
@@ -146,6 +146,6 @@ VM_Chunk compile(String source, ASTVec arena, size_t index) {
         .constants = ValueVec_new(),
         .code = CodeVec_new(),
     };
-    compile_ast(&compiler, &chunk, arena, index);
+    compile_ast(&compiler, &chunk, index);
     return chunk;
 }
