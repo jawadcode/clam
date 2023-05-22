@@ -11,8 +11,10 @@ bool VM_Value_eq(VM_Value a, VM_Value b) {
             return true;
         case VM_VALUE_BOOL:
             return a.value.boolean == b.value.boolean;
-        case VM_VALUE_NUMBER:
-            return a.value.number == b.value.number;
+        case VM_VALUE_INT:
+            return a.value.integer == b.value.integer;
+        case VM_VALUE_FLOAT:
+            return a.value.floate == b.value.floate;
         case VM_VALUE_STRING:
             return String_eq(a.value.string, b.value.string);
         case VM_VALUE_LIST: {

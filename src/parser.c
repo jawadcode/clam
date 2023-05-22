@@ -7,6 +7,7 @@
 #include "vec.h"
 #include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 DEF_VEC_T(String, StringVec)
@@ -18,10 +19,10 @@ DEF_RESULT(StringBuf, SyntaxError, ParseString);
 DEF_RESULT(Token, SyntaxError, Token);
 DEF_RESULT(AST, SyntaxError, AST);
 
-#define TK_EXPR_LEN 11
+#define TK_EXPR_LEN 12
 static const TokenKind TK_EXPR[TK_EXPR_LEN] = {
-    TK_UNIT,   TK_TRUE,   TK_FALSE, TK_NUMBER, TK_STRING, TK_IDENT,
-    TK_LPAREN, TK_LCURLY, TK_LET,   TK_IF,     TK_FUN};
+    TK_UNIT,  TK_TRUE,   TK_FALSE,  TK_INT, TK_FLOAT, TK_STRING,
+    TK_IDENT, TK_LPAREN, TK_LCURLY, TK_LET, TK_IF,    TK_FUN};
 
 #define TK_BINOPS_LEN 17
 static const TokenKind TK_BINOPS[TK_BINOPS_LEN] = {
@@ -51,11 +52,23 @@ static inline Token next(Parser *self) {
     return Lexer_next_token(&self->lexer);
 }
 
-static double parse_number(Parser *self, Span span) {
+static int32_t parse_int(Parser *self, Span span) {
+    const char *num_str = self->lexer.source.buffer + span.start;
+
+    int32_t value = 0;
+    while (num_str < self->source.buffer + self->source.length - 1 &&
+           *num_str >= 0 && *num_str <= '9')
+        value = value * 10 + (*num_str++ - '0');
+
+    return value;
+}
+
+static double parse_float(Parser *self, Span span) {
     const char *num_str = self->lexer.source.buffer + span.start;
 
     double value = 0.0;
-    while (*num_str >= '0' && *num_str <= '9') {
+    while (num_str < self->source.buffer + self->source.length &&
+           *num_str >= '0' && *num_str <= '9') {
         value = value * 10.0 + (*num_str++ - '0');
     }
 
@@ -148,10 +161,15 @@ static ASTResult parse_literal(Parser *self) {
     case TK_FALSE:
         lit = (AST_Literal){.tag = LITERAL_BOOL, .value = {.boolean = false}};
         break;
-    case TK_NUMBER:
-        lit = (AST_Literal){
-            .tag = LITERAL_NUMBER,
-            .value = {.number = parse_number(self, current.span)}};
+    case TK_INT:
+        lit =
+            (AST_Literal){.tag = LITERAL_INT,
+                          .value = {.integer = parse_int(self, current.span)}};
+        break;
+    case TK_FLOAT:
+        lit =
+            (AST_Literal){.tag = LITERAL_FLOAT,
+                          .value = {.floate = parse_float(self, current.span)}};
         break;
     case TK_STRING: {
         StringBuf string;
@@ -418,7 +436,7 @@ static ParseResult parse_list_index(Parser *self, ASTIndex list) {
     RET_ERR_ASSIGN(index, ParseResult, Parser_parse_expr(self));
     Token r_square;
     RET_ERR_ASSIGN(r_square, TokenResult, expect(self, TK_RSQUARE));
-    AST expr = {.tag = AST_LIST,
+    AST expr = {.tag = AST_LIST_INDEX,
                 .value = {.list_index = {list, index}},
                 .span = {.start = self->ast_arena.buffer[list].span.start,
                          .end = r_square.span.end}};
@@ -435,7 +453,8 @@ static ParseResult parse_simple_expr(Parser *self) {
     case TK_UNIT:
     case TK_TRUE:
     case TK_FALSE:
-    case TK_NUMBER:
+    case TK_INT:
+    case TK_FLOAT:
     case TK_STRING: {
         AST lhs_ast;
         RET_ERR_ASSIGN(lhs_ast, ASTResult, parse_literal(self));

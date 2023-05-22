@@ -145,9 +145,11 @@ static TokenKind number(Lexer *lexer) {
 
         while (is_digit(peek(lexer)))
             skip(lexer);
-    }
 
-    return TK_NUMBER;
+        return TK_FLOAT;
+    } else {
+        return TK_INT;
+    }
 }
 
 static inline bool match(Lexer *lexer, char expected) {
@@ -292,8 +294,10 @@ String TK_to_string(TokenKind kind) {
         return STR("false");
     case TK_UNIT:
         return STR("unit");
-    case TK_NUMBER:
-        return STR("numeric literal");
+    case TK_INT:
+        return STR("integer literal");
+    case TK_FLOAT:
+        return STR("float literal");
     case TK_STRING:
         return STR("string literal");
     case TK_IDENT:

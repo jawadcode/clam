@@ -22,48 +22,49 @@ typedef enum {
     TK_TRUE = 7,    // "true"
     TK_FALSE = 8,   // "false"
     TK_UNIT = 9,    // "unit"
-    TK_NUMBER = 10, // Numeric literal, e.g: "0.123" or "1234"
-    TK_STRING = 11, // String literal, e.g: "this is a string"
+    TK_INT = 10,    // Integer literal, e.g. "1234"
+    TK_FLOAT = 11,  // Float literal e.g. "123.4"
+    TK_STRING = 12, // String literal, e.g: "this is a string"
 
     /* MISC */
-    TK_IDENT = 12,   // Identifier
-    TK_ASSIGN = 13,  // "="
-    TK_ARROW = 14,   // "=>"
-    TK_LPAREN = 15,  // "("
-    TK_RPAREN = 16,  // ")"
-    TK_LSQUARE = 17, // "["
-    TK_RSQUARE = 18, // "]"
-    TK_LCURLY = 19,  // "{"
-    TK_RCURLY = 20,  // "}"
-    TK_COMMA = 21,   // ","
-    TK_FNPIPE = 22,  // "|>"
-    TK_APPEND = 23,  // "::"
-    TK_CONCAT = 24,  // "++"
+    TK_IDENT = 13,   // Identifier
+    TK_ASSIGN = 14,  // "="
+    TK_ARROW = 15,   // "=>"
+    TK_LPAREN = 16,  // "("
+    TK_RPAREN = 17,  // ")"
+    TK_LSQUARE = 18, // "["
+    TK_RSQUARE = 19, // "]"
+    TK_LCURLY = 20,  // "{"
+    TK_RCURLY = 21,  // "}"
+    TK_COMMA = 22,   // ","
+    TK_FNPIPE = 23,  // "|>"
+    TK_APPEND = 24,  // "::"
+    TK_CONCAT = 25,  // "++"
 
     /* ARITHMETIC OPS */
     // TK_SUB (unary)
-    TK_ADD = 25, // "+"
-    TK_SUB = 26, // "-"
-    TK_MUL = 27, // "*"
-    TK_DIV = 28, // "/"
-    TK_MOD = 29, // "%"
+    TK_ADD = 26, // "+"
+    TK_SUB = 27, // "-"
+    TK_MUL = 28, // "*"
+    TK_DIV = 29, // "/"
+    TK_MOD = 30, // "%"
 
     /* BOOLEAN OPS */
-    TK_NOT = 30, // "not"
-    TK_AND = 31, // "and"
-    TK_OR = 32,  // "or"
+    TK_NOT = 31, // "not"
+    TK_AND = 32, // "and"
+    TK_OR = 33,  // "or"
 
     /* COMPARISON OPS */
-    TK_LT = 33,  // "<"
-    TK_LEQ = 34, // "<="
-    TK_GT = 35,  // ">"
-    TK_GEQ = 36, // ">="
-    TK_EQ = 37,  // "=="
-    TK_NEQ = 38, // "!="
+    TK_LT = 34,  // "<"
+    TK_LEQ = 35, // "<="
+    TK_GT = 36,  // ">"
+    TK_GEQ = 37, // ">="
+    TK_EQ = 38,  // "=="
+    TK_NEQ = 39, // "!="
 
     /* SPECIAL */
-    TK_INVALID = 39, // Invalid token
-    TK_EOF = 40,     // End Of File
+    TK_INVALID = 40, // Invalid token
+    TK_EOF = 41,     // End Of File
 } TokenKind;
 
 // A singular token

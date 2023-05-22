@@ -21,12 +21,14 @@ typedef struct AST_Literal {
     enum AST_LiteralTag {
         LITERAL_UNIT = 0,
         LITERAL_BOOL = 1,
-        LITERAL_NUMBER = 2,
-        LITERAL_STRING = 3,
+        LITERAL_INT = 2,
+        LITERAL_FLOAT = 3,
+        LITERAL_STRING = 4,
     } tag;
     union AST_LiteralUnion {
         bool boolean;
-        double number;
+        int integer;
+        double floate;
         StringBuf string;
     } value;
 } AST_Literal;
@@ -79,8 +81,8 @@ typedef struct AST_IfElse {
 // enumeration in 'VM_Op' so we can safely cast to it (doesn't match with
 // 'TokenKind' because 'TK_SUB' is used by 'BINOP_SUB')
 typedef enum AST_UnOp {
-    AST_UNOP_NOT = 30,
-    AST_UNOP_NEGATE = 41,
+    AST_UNOP_NOT = 31,
+    AST_UNOP_NEGATE = 42,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
@@ -93,25 +95,25 @@ typedef struct AST_UnaryOp {
 // A binary operation, with a value matching that of the corresponding
 // enumeration in 'TokenKind' so we can safely cast from it
 typedef enum AST_BinOp {
-    BINOP_FNPIPE = 22,
-    BINOP_APPEND = 23,
-    BINOP_CONCAT = 24,
+    BINOP_FNPIPE = 23,
+    BINOP_APPEND = 24,
+    BINOP_CONCAT = 25,
 
-    BINOP_ADD = 25,
-    BINOP_SUB = 26,
-    BINOP_MUL = 27,
-    BINOP_DIV = 28,
-    BINOP_MOD = 29,
+    BINOP_ADD = 26,
+    BINOP_SUB = 27,
+    BINOP_MUL = 28,
+    BINOP_DIV = 29,
+    BINOP_MOD = 30,
 
-    BINOP_AND = 31,
-    BINOP_OR = 32,
+    BINOP_AND = 32,
+    BINOP_OR = 33,
 
-    BINOP_LT = 33,
-    BINOP_LEQ = 34,
-    BINOP_GT = 35,
-    BINOP_GEQ = 36,
-    BINOP_EQ = 37,
-    BINOP_NEQ = 38,
+    BINOP_LT = 34,
+    BINOP_LEQ = 35,
+    BINOP_GT = 36,
+    BINOP_GEQ = 37,
+    BINOP_EQ = 38,
+    BINOP_NEQ = 39,
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'

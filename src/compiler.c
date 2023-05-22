@@ -17,9 +17,12 @@ static VM_Value lit_to_value(AST_Literal literal) {
     case LITERAL_BOOL:
         return (VM_Value){.tag = VM_VALUE_BOOL,
                           .value = {.boolean = literal.value.boolean}};
-    case LITERAL_NUMBER:
-        return (VM_Value){.tag = VM_VALUE_NUMBER,
-                          .value = {.number = literal.value.number}};
+    case LITERAL_INT:
+        return (VM_Value){.tag = VM_VALUE_INT,
+                          .value = {.integer = literal.value.integer}};
+    case LITERAL_FLOAT:
+        return (VM_Value){.tag = VM_VALUE_FLOAT,
+                          .value = {.floate = literal.value.floate}};
     case LITERAL_STRING:
         return (VM_Value){
             .tag = VM_VALUE_STRING,
@@ -111,11 +114,14 @@ static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index) {
     AST ast = compiler->arena.buffer[index];
     switch (ast.tag) {
     case AST_LITERAL:
-        return compile_literal(chunk, ast.value.literal);
+        compile_literal(chunk, ast.value.literal);
+        break;
     case AST_IDENT:
-        return compile_ident(compiler, chunk, ast.value.ident);
+        compile_ident(compiler, chunk, ast.value.ident);
+        break;
     case AST_LIST:
-        return compile_list(compiler, chunk, ast.value.list);
+        compile_list(compiler, chunk, ast.value.list);
+        break;
     case AST_LET_IN:
         return;
     case AST_ABSTRACTION:

@@ -19,28 +19,28 @@ typedef enum VM_Op {
 
     /* UNARY OPS */
     // Check the top of the stack is a boolean, and then NOT it in place
-    VM_OP_NOT = 30,
+    VM_OP_NOT = 31,
     // Check the top of the stack is a number, and then negate it in place
-    VM_OP_NEGATE = 41,
+    VM_OP_NEGATE = 42,
 
     /* BINARY OPS */
     // Pops RHS from the stack, then modifies the LHS (at the top of the stack)
     // in place by applying the operation with the RHS to it
-    VM_OP_APPEND = 23,
-    VM_OP_CONCAT = 24,
-    VM_OP_ADD = 25,
-    VM_OP_SUB = 26,
-    VM_OP_MUL = 27,
-    VM_OP_DIV = 28,
-    VM_OP_MOD = 29, // uses fmod
-    VM_OP_AND = 31, // not short-circuiting
-    VM_OP_OR = 32,  // not short-circuiting
-    VM_OP_LT = 33,
-    VM_OP_LEQ = 34,
-    VM_OP_GT = 35,
-    VM_OP_GEQ = 36,
-    VM_OP_EQ = 37,
-    VM_OP_NEQ = 38,
+    VM_OP_APPEND = 24,
+    VM_OP_CONCAT = 25,
+    VM_OP_ADD = 26,
+    VM_OP_SUB = 27,
+    VM_OP_MUL = 28,
+    VM_OP_DIV = 29,
+    VM_OP_MOD = 30, // uses fmod
+    VM_OP_AND = 32, // not short-circuiting
+    VM_OP_OR = 33,  // not short-circuiting
+    VM_OP_LT = 34,
+    VM_OP_LEQ = 35,
+    VM_OP_GT = 36,
+    VM_OP_GEQ = 37,
+    VM_OP_EQ = 38,
+    VM_OP_NEQ = 39,
 
     /* BRANCHING */
     // Pop the condition off of the stack and if it is true then jump
@@ -65,14 +65,16 @@ typedef struct VM_Value {
     enum VM_ValueTag {
         VM_VALUE_UNIT = 0,
         VM_VALUE_BOOL = 1,
-        VM_VALUE_NUMBER = 2,
-        VM_VALUE_STRING = 3,
-        VM_VALUE_LIST = 4,
-        VM_FUNCTION = 5,
+        VM_VALUE_INT = 2,
+        VM_VALUE_FLOAT = 3,
+        VM_VALUE_STRING = 4,
+        VM_VALUE_LIST = 5,
+        VM_FUNCTION = 6,
     } tag;
     union VM_ValueUnion {
         bool boolean;
-        double number;
+        int32_t integer;
+        double floate;
         String string;
         ValueVec list;
         VM_Function fun;

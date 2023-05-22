@@ -1,8 +1,11 @@
-#include "ast.h"
-#include "common.h"
+#include <math.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "ast.h"
+#include "common.h"
 
 DEF_VEC(AST, ASTVec)
 
@@ -50,6 +53,13 @@ static String unop_to_string(AST_UnOp op) {
     }
 }
 
+static void format_int(StringBuf *buf, int32_t num) {
+    if (num > 0) {
+        format_int(buf, num / 10);
+        StringBuf_push(buf, '0' + num % 10);
+    }
+}
+
 static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
     AST *node = &arena->buffer[index];
     switch (node->tag) {
@@ -63,10 +73,18 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
             StringBuf_push_string(buf, literal->value.boolean ? STR("true")
                                                               : STR("false"));
             break;
-        case LITERAL_NUMBER: {
+        case LITERAL_INT: {
+            int32_t num = literal->value.integer;
+            if (num == 0)
+                StringBuf_push(buf, '0');
+            else
+                format_int(buf, num);
+            break;
+        }
+        case LITERAL_FLOAT: {
             char num[20];
             // I hate that I have to use a printf-style function but needs must
-            snprintf(num, 20, "%f", literal->value.number);
+            snprintf(num, 20, "%f", literal->value.floate);
             StringBuf_push_string(buf,
                                   (String){.buffer = num,
                                            // 20 is the maximum length, the null
