@@ -13,8 +13,10 @@ void String_write(String string, FILE *file) {
 }
 
 bool String_eq(String a, String b) {
-    if (a.length != b.length) return false;
-    else return memcmp(a.buffer, b.buffer, a.length) == 0;
+    if (a.length != b.length)
+        return false;
+    else
+        return memcmp(a.buffer, b.buffer, a.length) == 0;
 }
 
 DEF_VEC(char, StringBuf)

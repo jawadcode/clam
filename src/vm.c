@@ -18,19 +18,19 @@ bool VM_Value_eq(VM_Value a, VM_Value b) {
         case VM_VALUE_STRING:
             return String_eq(a.value.string, b.value.string);
         case VM_VALUE_LIST: {
-            ValueVec a_list = a.value.list;
-            ValueVec b_list = b.value.list;
-            if (a_list.length != b_list.length)
+            ValueVec *a_list = a.value.list;
+            ValueVec *b_list = b.value.list;
+            if (a_list->length != b_list->length)
                 return false;
             else {
-                for (size_t i = 0; i < a_list.length; i++) {
-                    if (!VM_Value_eq(a_list.buffer[i], b_list.buffer[i]))
+                for (size_t i = 0; i < a_list->length; i++) {
+                    if (!VM_Value_eq(a_list->buffer[i], b_list->buffer[i]))
                         return false;
                 }
                 return true;
             }
         }
         case VM_FUNCTION:
-            return a.value.fun == b.value.fun;
+            return false;
         }
 }

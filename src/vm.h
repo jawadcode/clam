@@ -53,12 +53,12 @@ typedef enum VM_Op {
     VM_OP_RET,
 } VM_Op;
 
-// Points to an address in the chunk
-typedef uint16_t VM_Function;
+typedef struct VM_Chunk VM_Chunk;
 
-typedef struct VM_Value VM_Value;
-
-DECL_VEC_HEADER(struct VM_Value, ValueVec)
+// A function
+typedef struct VM_Function {
+    VM_Chunk *chunk;
+} VM_Function;
 
 // Values as stored on the stack
 typedef struct VM_Value {
@@ -76,15 +76,21 @@ typedef struct VM_Value {
         int32_t integer;
         double floate;
         String string;
-        ValueVec list;
+        struct ValueVec *list;
         VM_Function fun;
     } value;
 } VM_Value;
 
 bool VM_Value_eq(VM_Value a, VM_Value b);
 
+// We do a little bit of inconsistent naming
+inline bool is_obj(VM_Value value) { return value.tag >= 4; }
+
 DECL_VEC_HEADER(uint16_t, CodeVec)
 DECL_VEC_HEADER(size_t, LineVec)
+
+DECL_VEC_HEADER(VM_Value, ValueVec)
+VEC_WITH_CAP_SIG(VM_Value, ValueVec)
 
 // Passed to the interpreter and executed
 typedef struct VM_Chunk {

@@ -1,14 +1,14 @@
-#include "parser.h"
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
+
 #include "ast.h"
 #include "common.h"
 #include "lexer.h"
 #include "memory.h"
+#include "parser.h"
 #include "result.h"
 #include "vec.h"
-#include <math.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 DEF_VEC_T(String, StringVec)
 
@@ -35,7 +35,7 @@ static const TokenKind TK_EXPR_TERMINATORS[TK_EXPR_TERMINATORS_LEN] = {
     TK_RPAREN, TK_RSQUARE, TK_RCURLY, TK_COMMA,
     TK_IN,     TK_THEN,    TK_ELSE,   TK_EOF};
 
-Parser Parser_new(const String file_name, const String source) {
+inline Parser Parser_new(const String file_name, const String source) {
     return (Parser){
         .file_name = file_name,
         .source = source,
@@ -56,8 +56,8 @@ static int32_t parse_int(Parser *self, Span span) {
     const char *num_str = self->lexer.source.buffer + span.start;
 
     int32_t value = 0;
-    while (num_str < self->source.buffer + self->source.length - 1 &&
-           *num_str >= 0 && *num_str <= '9')
+    while (num_str < self->source.buffer + span.end && *num_str >= 0 &&
+           *num_str <= '9')
         value = value * 10 + (*num_str++ - '0');
 
     return value;
@@ -360,7 +360,7 @@ static ASTResult parse_let_binding(Parser *self) {
         RET_ERR(TokenResult, expect(self, TK_ASSIGN));
         ASTIndex value;
         RET_ERR_ASSIGN(value, ParseResult, Parser_parse_expr(self));
-        AST_LetBindVec_push(&binds, (AST_LetBind){ident, value});
+        AST_LetBindVec_push(&binds, (AST_LetBind){ident_span, ident, value});
         Token *peeked = peek(self);
         if (peeked->kind == TK_COMMA) {
             next(self);
@@ -385,7 +385,7 @@ static ASTResult parse_unop(Parser *self) {
     SyntaxError error;
     Token op_token = next(self);
     Span op_span = op_token.span;
-    AST_UnOp op = op_token.kind == TK_NOT ? AST_UNOP_NOT : AST_UNOP_NEGATE;
+    AST_UnOp op = op_token.kind == TK_NOT ? UNOP_NOT : UNOP_NEGATE;
     ASTIndex operand;
     RET_ERR_ASSIGN(operand, ParseResult, Parser_parse_expr(self));
     AST unop = (AST){.tag = AST_UNARY_OP,

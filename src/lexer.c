@@ -1,7 +1,7 @@
-#include "lexer.h"
 #include <alloca.h>
-#include <stddef.h>
 #include <string.h>
+
+#include "lexer.h"
 
 inline Lexer Lexer_new(const String source) {
     return (Lexer){

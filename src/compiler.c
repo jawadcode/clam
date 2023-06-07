@@ -1,14 +1,18 @@
+#include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "ast.h"
 #include "compiler.h"
 #include "lexer.h"
+#include "result.h"
 #include "vec.h"
 #include "vm.h"
 
 DEF_VEC(uint16_t, CodeVec)
 DEF_VEC(VM_Value, ValueVec)
+VEC_WITH_CAP(VM_Value, ValueVec)
 
 static VM_Value lit_to_value(AST_Literal literal) {
     switch (literal.tag) {
@@ -30,27 +34,34 @@ static VM_Value lit_to_value(AST_Literal literal) {
     }
 }
 
-uint16_t find_or_push_value(ValueVec *values, VM_Value value) {
+DEF_RESULT(uint16_t, CompileError, Index);
+
+IndexResult find_or_push_value(ValueVec *values, VM_Value value, Span span) {
     for (size_t i = 0; i < values->length; i++) {
         VM_Value current = values->buffer[i];
         if (VM_Value_eq(current, value))
-            return i;
+            return (IndexResult){.tag = RESULT_OK,
+                                 .value = {.ok = (uint16_t)i}};
     }
     size_t index = ValueVec_push(values, value);
     if (index > UINT16_MAX) {
-        fputs("Reached size limit on constants table (UINT16_MAX)", stderr);
-        exit(1);
+        return (IndexResult){.tag = RESULT_ERR,
+                             .value = {.err = {.tag = COMPILE_ERROR_MAX_CONSTS,
+                                               .err = {.max_consts = span}}}};
     } else
-        return (uint16_t)index;
+        return (IndexResult){.tag = RESULT_OK,
+                             .value = {.ok = (uint16_t)index}};
 }
 
-uint16_t find_or_push_literal(ValueVec *values, AST_Literal literal) {
+IndexResult find_or_push_literal(ValueVec *values, AST_Literal literal,
+                                 Span span) {
     VM_Value value = lit_to_value(literal);
-    return find_or_push_value(values, value);
+    return find_or_push_value(values, value, span);
 }
 
 typedef struct Local {
-    Token token;
+    Span span;
+    String source;
     uint16_t depth;
 } Local;
 
@@ -60,70 +71,111 @@ typedef struct Compiler {
     String source;
     ASTVec arena;
     LocalVec locals;
+    uint16_t offset;
     uint16_t scope_depth;
 } Compiler;
 
-static void compile_literal(VM_Chunk *chunk, AST_Literal literal) {
+DEF_RESULT(void *, CompileError, VoidCompile);
+
+static VoidCompileResult compile_literal(VM_Chunk *chunk, AST_Literal literal,
+                                         Span span) {
+    CompileError error;
     CodeVec_push(&chunk->code, (uint16_t)VM_OP_CONST);
-    CodeVec_push(&chunk->code,
-                 (uint16_t)find_or_push_literal(&chunk->constants, literal));
+    uint16_t index;
+    RET_ERR_ASSIGN(index, IndexResult,
+                   find_or_push_literal(&chunk->constants, literal, span));
+    CodeVec_push(&chunk->code, index);
+    return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
+FAILURE:
+    return (VoidCompileResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
-static void compile_ident(Compiler *compiler, VM_Chunk *chunk, String ident) {
+static VoidCompileResult compile_ident(Compiler *compiler, VM_Chunk *chunk,
+                                       String ident, Span span) {
     // The length of 'Compiler::locals' is guaranteed to not exceed 'UINT16_MAX'
     for (uint16_t i = 0; i < compiler->locals.length; i++) {
         Local local = compiler->locals.buffer[i];
-        if (String_eq(Token_to_string(compiler->source, local.token), ident)) {
+        if (String_eq(local.source, ident)) {
             CodeVec_push(&chunk->code, (uint16_t)VM_OP_GET);
             CodeVec_push(&chunk->code, i);
-            return;
+            return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
         }
     }
 
-    fputs("Variable not found: ", stderr);
-    String_write(ident, stderr);
-    fputc('\n', stderr);
+    return (VoidCompileResult){
+        .tag = RESULT_ERR,
+        .value = {
+            .err = {.tag = COMPILE_ERROR_NOT_FOUND,
+                    .err = {.not_found = {.span = span, .not_found = ident}}}}};
 }
 
-static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index);
+static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
+                                     size_t index);
 
 // Another beautiful demonstration of the power of stack machines, we can
 // compile lists by compiling each sub-expression and appending it to what
 // starts out as an empty list, forming our result
-static void compile_list(Compiler *compiler, VM_Chunk *chunk, AST_List list) {
-    uint16_t empty = find_or_push_value(
-        &chunk->constants,
-        (VM_Value){.tag = VM_VALUE_LIST, .value = {.list = ValueVec_new()}});
+static VoidCompileResult compile_list(Compiler *compiler, VM_Chunk *chunk,
+                                      AST_List list, Span span) {
+    CompileError error;
+    uint16_t empty;
+    RET_ERR_ASSIGN(
+        empty, IndexResult,
+        find_or_push_value(
+            &chunk->constants,
+            // I should be passing an empty list but it has to be a reference
+            // and I have no idea where to store the actual ValueVec value, it
+            // can't be defined as a local variable because that'll result in a
+            // dangling pointer, and it feels a bit icky to heap allocate a
+            // simple struct that points to a heap allocation itself.
+            (VM_Value){.tag = VM_VALUE_LIST, .value = {.list = NULL}}, span));
     CodeVec_push(&chunk->code, VM_OP_CONST);
     CodeVec_push(&chunk->code, empty);
     for (size_t i = 0; i < list.length; i++) {
         ASTIndex item = list.buffer[i];
-        compile_ast(compiler, chunk, item);
+        RET_ERR(VoidCompileResult, compile_ast(compiler, chunk, item));
         CodeVec_push(&chunk->code, (uint16_t)VM_OP_APPEND);
     }
+    return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
+FAILURE:
+    return (VoidCompileResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
-static void compile_let_in(Compiler *compiler, VM_Chunk *chunk,
-                           AST_LetIn let_in) {
+static VoidCompileResult compile_let_in(Compiler *compiler, VM_Chunk *chunk,
+                                        AST_LetIn let_in) {
     compiler->scope_depth++;
-    LocalVec_push(&compiler->locals, (Local){/* Zhu-Li, do the thing */});
+    for (size_t i = 0; i < let_in.bindings.length; i++) {
+        AST_LetBind bind = let_in.bindings.buffer[i];
+        if (compiler->locals.length + 1 > UINT16_MAX) {
+            return (VoidCompileResult){
+                .tag = RESULT_ERR,
+                .value = {.err = {.tag = COMPILE_ERROR_MAX_LOCALS,
+                                  .err = {.max_locals = bind.span}}}};
+        }
+        LocalVec_push(&compiler->locals, (Local){
+                                             .span = bind.span,
+                                             .source = bind.ident,
+                                             .depth = compiler->scope_depth,
+                                         });
+        compile_ast(compiler, chunk, bind.value);
+    }
+    compile_ast(compiler, chunk, let_in.body);
     compiler->scope_depth--;
+    return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
 }
 
-static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index) {
+static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
+                                     size_t index) {
     AST ast = compiler->arena.buffer[index];
     switch (ast.tag) {
     case AST_LITERAL:
-        compile_literal(chunk, ast.value.literal);
-        break;
+        return compile_literal(chunk, ast.value.literal, ast.span);
     case AST_IDENT:
-        compile_ident(compiler, chunk, ast.value.ident);
-        break;
+        return compile_ident(compiler, chunk, ast.value.ident, ast.span);
     case AST_LIST:
-        compile_list(compiler, chunk, ast.value.list);
-        break;
+        return compile_list(compiler, chunk, ast.value.list, ast.span);
     case AST_LET_IN:
-        return;
+        return compile_let_in(compiler, chunk, ast.value.let_in);
     case AST_ABSTRACTION:
         break;
     case AST_APPLICATION:
@@ -139,9 +191,11 @@ static void compile_ast(Compiler *compiler, VM_Chunk *chunk, size_t index) {
     case AST_LIST_INDEX:
         break;
     }
+    return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
 }
 
-VM_Chunk compile(String source, ASTVec arena, size_t index) {
+CompileResult compile(String source, ASTVec arena, size_t index) {
+    CompileError error;
     Compiler compiler = {
         .source = source,
         .arena = arena,
@@ -152,6 +206,10 @@ VM_Chunk compile(String source, ASTVec arena, size_t index) {
         .constants = ValueVec_new(),
         .code = CodeVec_new(),
     };
-    compile_ast(&compiler, &chunk, index);
-    return chunk;
+    RET_ERR(VoidCompileResult, compile_ast(&compiler, &chunk, index));
+    LocalVec_free(&compiler.locals);
+    return (CompileResult){.tag = RESULT_OK, .value = {.ok = chunk}};
+FAILURE:
+    LocalVec_free(&compiler.locals);
+    return (CompileResult){.tag = RESULT_ERR, .value = {.err = error}};
 }

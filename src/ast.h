@@ -15,19 +15,19 @@ typedef size_t ASTIndex;
 
 DECL_VEC_HEADER(ASTIndex, AST_List)
 
-// A literal, e.g: 'unit', 'true', '0.123' and '"a string"'
+// A literal
 typedef struct AST_Literal {
     // The values should match up with VM_ValueTag
     enum AST_LiteralTag {
-        LITERAL_UNIT = 0,
-        LITERAL_BOOL = 1,
-        LITERAL_INT = 2,
-        LITERAL_FLOAT = 3,
-        LITERAL_STRING = 4,
+        LITERAL_UNIT = 0,   // "unit"
+        LITERAL_BOOL = 1,   // "true", "false"
+        LITERAL_INT = 2,    // e.g. "1234"
+        LITERAL_FLOAT = 3,  // e.g. "12.34"
+        LITERAL_STRING = 4, // e.g. ""this is a string""
     } tag;
     union AST_LiteralUnion {
         bool boolean;
-        int integer;
+        int32_t integer;
         double floate;
         StringBuf string;
     } value;
@@ -35,6 +35,7 @@ typedef struct AST_Literal {
 
 // A singular let binding (variable definition) in 'AST_LetIn'
 typedef struct AST_LetBind {
+    Span span;
     String ident;
     ASTIndex value;
 } AST_LetBind;
@@ -42,21 +43,20 @@ typedef struct AST_LetBind {
 // clang-format off
 DECL_VEC_HEADER(AST_LetBind, AST_LetBindVec)
 
-// An expression which is equivalent to 'body', given the variables defined
-// in 'bindings'
+// An expression that introduces a new scope, defines the variables in 'bindings' and evaluates 'body' in that scope
 typedef struct AST_LetIn {
     AST_LetBindVec bindings;
     ASTIndex body;
     // clang-format on
 } AST_LetIn;
 
-// An anonymous function with an argument 'argument' and a body 'body'
+// An anonymous function
 typedef struct AST_Abstraction {
     String argument;
     ASTIndex body;
 } AST_Abstraction;
 
-// An expression where 'function' is called with the argument 'argument'
+// A function call
 typedef struct AST_Application {
     ASTIndex function;
     ASTIndex argument;
@@ -69,8 +69,7 @@ typedef struct AST_Print {
     ASTIndex expr;
 } AST_Print;
 
-// An if-else expression, operating on the condition 'condition', with a
-// consequence 'then' and an alternative 'else_'
+// An if-else expression
 typedef struct AST_IfElse {
     ASTIndex condition;
     ASTIndex then;
@@ -81,8 +80,8 @@ typedef struct AST_IfElse {
 // enumeration in 'VM_Op' so we can safely cast to it (doesn't match with
 // 'TokenKind' because 'TK_SUB' is used by 'BINOP_SUB')
 typedef enum AST_UnOp {
-    AST_UNOP_NOT = 31,
-    AST_UNOP_NEGATE = 42,
+    UNOP_NOT = 31,
+    UNOP_NEGATE = 42,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`

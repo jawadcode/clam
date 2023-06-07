@@ -45,9 +45,9 @@ static String binop_to_string(AST_BinOp op) {
 
 static String unop_to_string(AST_UnOp op) {
     switch (op) {
-    case AST_UNOP_NOT:
+    case UNOP_NOT:
         return STR("not");
-    case AST_UNOP_NEGATE:
+    case UNOP_NEGATE:
         return STR("-");
         UNREACHABLE;
     }
