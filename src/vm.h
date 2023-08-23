@@ -55,13 +55,17 @@ typedef enum VM_Op {
 
 typedef struct VM_Chunk VM_Chunk;
 
-// A function
+// Currently a bit of a useless struct but we will add upvalues and stuff later
 typedef struct VM_Function {
     VM_Chunk *chunk;
 } VM_Function;
 
+typedef struct VM_Value VM_Value;
+DECL_VEC_HEADER(VM_Value, ValueVec)
+VEC_WITH_CAP_SIG(VM_Value, ValueVec)
+
 // Values as stored on the stack
-typedef struct VM_Value {
+struct VM_Value {
     enum VM_ValueTag {
         VM_VALUE_UNIT = 0,
         VM_VALUE_BOOL = 1,
@@ -76,10 +80,10 @@ typedef struct VM_Value {
         int32_t integer;
         double floate;
         String string;
-        struct ValueVec *list;
+        struct ValueVec list;
         VM_Function fun;
     } value;
-} VM_Value;
+};
 
 bool VM_Value_eq(VM_Value a, VM_Value b);
 
@@ -88,9 +92,6 @@ inline bool is_obj(VM_Value value) { return value.tag >= 4; }
 
 DECL_VEC_HEADER(uint16_t, CodeVec)
 DECL_VEC_HEADER(size_t, LineVec)
-
-DECL_VEC_HEADER(VM_Value, ValueVec)
-VEC_WITH_CAP_SIG(VM_Value, ValueVec)
 
 // Passed to the interpreter and executed
 typedef struct VM_Chunk {

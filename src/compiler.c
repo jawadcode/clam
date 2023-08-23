@@ -65,6 +65,11 @@ typedef struct Local {
     uint16_t depth;
 } Local;
 
+typedef enum FunType {
+    FUN_TYPE_TOPLEVEL,
+    FUN_TYPE_CLOSURE,
+} FunType;
+
 DEF_VEC_T(Local, LocalVec)
 
 typedef struct Compiler {
@@ -113,8 +118,8 @@ static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
                                      size_t index);
 
 // Another beautiful demonstration of the power of stack machines, we can
-// compile lists by compiling each sub-expression and appending it to what
-// starts out as an empty list, forming our result
+// compile list initialisers by compiling each sub-expression and appending it
+// to what starts out as an empty list, forming our result
 static VoidCompileResult compile_list(Compiler *compiler, VM_Chunk *chunk,
                                       AST_List list, Span span) {
     CompileError error;
@@ -123,12 +128,8 @@ static VoidCompileResult compile_list(Compiler *compiler, VM_Chunk *chunk,
         empty, IndexResult,
         find_or_push_value(
             &chunk->constants,
-            // I should be passing an empty list but it has to be a reference
-            // and I have no idea where to store the actual ValueVec value, it
-            // can't be defined as a local variable because that'll result in a
-            // dangling pointer, and it feels a bit icky to heap allocate a
-            // simple struct that points to a heap allocation itself.
-            (VM_Value){.tag = VM_VALUE_LIST, .value = {.list = NULL}}, span));
+            (VM_Value){.tag = VM_VALUE_LIST, .value = {.list = ValueVec_new()}},
+            span));
     CodeVec_push(&chunk->code, VM_OP_CONST);
     CodeVec_push(&chunk->code, empty);
     for (size_t i = 0; i < list.length; i++) {

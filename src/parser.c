@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -381,13 +382,15 @@ FAILURE:
     return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
+static ParseResult parse_simple_expr(Parser *self);
+
 static ASTResult parse_unop(Parser *self) {
     SyntaxError error;
     Token op_token = next(self);
     Span op_span = op_token.span;
     AST_UnOp op = op_token.kind == TK_NOT ? UNOP_NOT : UNOP_NEGATE;
     ASTIndex operand;
-    RET_ERR_ASSIGN(operand, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(operand, ParseResult, parse_simple_expr(self));
     AST unop = (AST){.tag = AST_UNARY_OP,
                      .value = {.unary_op = (AST_UnaryOp){op_span, op, operand}},
                      .span = {.start = op_span.start,
@@ -500,7 +503,6 @@ static ParseResult parse_simple_expr(Parser *self) {
         RET_ERR(TokenResult, expect(self, TK_RPAREN));
         break;
     default: {
-        puts("Testing");
         return (ParseResult){
             .tag = RESULT_ERR,
             .value = {

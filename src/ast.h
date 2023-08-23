@@ -1,7 +1,6 @@
 #ifndef CLAM_AST_H
 #define CLAM_AST_H
 
-#include <math.h>
 #include <stdbool.h>
 #include <stdint.h>
 
