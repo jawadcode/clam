@@ -64,7 +64,7 @@ VEC_WITH_CAP_SIG(char, StringBuf)
 #define BUF_TO_STR(x)                                                          \
     (String) { .buffer = (x).buffer, .length = (x).length }
 
-void StringBuf_push_string(StringBuf *buf, String string);
+void StringBuf_push_string(StringBuf *dest_buf, String src_str);
 
 void StringBuf_print(StringBuf buf);
 
