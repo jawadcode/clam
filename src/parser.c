@@ -470,6 +470,7 @@ FAILURE:
 static ParseResult parse_expr(Parser *self) {
     // Parse base terms surrounded by any unary ops, followed by any binary ops
     // Parse let and fun
+    return (ParseResult){};
 }
 
 ParseResult Parser_parse_expr(Parser *self) {
