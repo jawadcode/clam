@@ -187,16 +187,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         StringBuf_push(buf, ' ');
         format_ast_node(arena, binop->rhs, buf);
         StringBuf_push(buf, ')');
-        // Definitely didn't miss this out originally and cause UB 👀
-        break;
-    }
-    case AST_LIST_INDEX: {
-        AST_ListIndex *list_index = &node->value.list_index;
-        StringBuf_push_string(buf, STR("(get "));
-        format_ast_node(arena, list_index->list, buf);
-        StringBuf_push(buf, ' ');
-        format_ast_node(arena, list_index->index, buf);
-        StringBuf_push(buf, ')');
+        // Definitely didn't miss this out originally 👀
         break;
     }
     }

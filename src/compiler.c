@@ -189,8 +189,6 @@ static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
         break;
     case AST_BINARY_OP:
         break;
-    case AST_LIST_INDEX:
-        break;
     }
     return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
 }
