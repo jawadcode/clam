@@ -4,7 +4,6 @@
 #include "ast.h"
 #include "lexer.h"
 #include "result.h"
-#include "vec.h"
 #include <stdio.h>
 
 // Stores parser state

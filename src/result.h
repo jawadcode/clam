@@ -1,8 +1,6 @@
 #ifndef CLAM_RESULT_H
 #define CLAM_RESULT_H
 
-#include <stdio.h>
-
 typedef enum {
     RESULT_OK,
     RESULT_ERR,

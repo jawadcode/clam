@@ -5,8 +5,6 @@
 #include <stdint.h>
 
 #include "common.h"
-#include "lexer.h"
-#include "result.h"
 #include "vec.h"
 
 // A type alias which represents the index into the arena of nodes
@@ -122,12 +120,6 @@ typedef struct AST_BinaryOp {
     ASTIndex rhs;
 } AST_BinaryOp;
 
-// A list index expression
-typedef struct AST_ListIndex {
-    ASTIndex list;
-    ASTIndex index;
-} AST_ListIndex;
-
 // The Abstract Syntax Tree
 typedef struct AST {
     enum ASTTag {
@@ -141,7 +133,6 @@ typedef struct AST {
         AST_IF_ELSE,
         AST_UNARY_OP,
         AST_BINARY_OP,
-        AST_LIST_INDEX,
     } tag;
     union ASTUnion {
         AST_Literal literal;
@@ -154,7 +145,6 @@ typedef struct AST {
         AST_IfElse if_else;
         AST_UnaryOp unary_op;
         AST_BinaryOp binary_op;
-        AST_ListIndex list_index;
     } value;
     Span span;
 } AST;

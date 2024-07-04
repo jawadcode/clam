@@ -1,7 +1,6 @@
 #ifndef CLAM_LEXER_H
 #define CLAM_LEXER_H
 
-#include <stdint.h>
 #include <stdlib.h>
 
 #include "common.h"
