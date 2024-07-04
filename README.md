@@ -2,21 +2,26 @@
 
 Functional, bytecode interpreted language written in C
 
-## Usage Instructions:
+## Usage Instructions
 
-### Build:
+### Build
 
 ```bash
-meson setup builddir -Dbuildtype=release
-meson compile -C builddir
+# Release
+meson setup builddir/release -Dbuildtype=release -Db_lto=true
+meson compile -C builddir/release
+
+# Debug
+meson setup builddir/debug -Dbuildtype=debug -Db_sanitize=address,undefined
+meson compile -C builddir/debug
 ```
 
-### Run:
+### Run
 
 ```bash
-./builddir/clam
+./builddir/{debug,release}/clam
 ````
 
 ## Credits
 
-Lots of the interpreter's frontend code and general semantics are inspired by [Clox (from Crafting Interpreters)](https://www.github.com/munificent/craftinginterpreters/tree/master/c), so huge thanks to [Bob Nystrom](https://www.github.com/munificent) for his awesome book.
+The design and implementation of this interpreter is heavily inspired by [Clox (from Crafting Interpreters)](https://www.github.com/munificent/craftinginterpreters/tree/master/c), massive props to [Bob Nystrom](https://www.github.com/munificent) for writing such a useful book.
