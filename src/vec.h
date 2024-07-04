@@ -1,8 +1,6 @@
 #ifndef CLAM_VEC_H
 #define CLAM_VEC_H
 
-#include "memory.h"
-
 #define CREATE_VEC(T, Name)                                                    \
     typedef struct Name {                                                      \
         T *buffer;                                                             \

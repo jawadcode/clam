@@ -1,10 +1,9 @@
 #ifndef CLAM_COMPILER_H
 #define CLAM_COMPILER_H
 
-#include <stdint.h>
-
+#include "ast.h"
 #include "common.h"
-#include "parser.h"
+#include "result.h"
 #include "vm.h"
 
 typedef struct CompileError_NotFound {
