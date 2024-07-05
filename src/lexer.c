@@ -1,9 +1,9 @@
-#include <alloca.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "lexer.h"
 
-inline Lexer Lexer_new(const String source) {
+Lexer Lexer_new(const String source) {
     return (Lexer){
         .source = source,
         .start = 0,
@@ -374,13 +374,14 @@ void Token_print(const String source, Token token) {
     size_t length = token.span.end - token.span.start;
     const char *start = source.buffer + token.span.start;
 
-    char *text = (char *)alloca((length + 1) * sizeof(char));
+    char *text = (char *)malloc((length + 1) * sizeof(char));
     text = (char *)memcpy(text, start, length);
     text[length] = '\0';
 
     String_print(kind);
     printf("%*c @ %zu..%zu \"%s\"\n", 16 - (int)kind.length, ' ',
            token.span.start, token.span.end, text);
+    free(text);
 }
 
 DEF_VEC(Token, TokenVec)

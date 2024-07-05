@@ -26,17 +26,11 @@
 // I hate this language, all of its compilers and all of their stupid
 // idiosyncrasies
 #ifdef _MSC_VER
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        __assume(0)
+#define UNREACHABLE __assume(0)
 #elif defined(__GNUC__) || defined(__clang__)
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        __builtin_unreachable()
+#define UNREACHABLE __builtin_unreachable()
 #else
-#define UNREACHABLE                                                            \
-    default:                                                                   \
-        ((void)0)
+#define UNREACHABLE ((void)0)
 #endif
 
 // A string which consists of a 'buffer' which is not necessarily

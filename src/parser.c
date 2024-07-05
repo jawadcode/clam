@@ -39,7 +39,7 @@ static const TokenKind TK_EXPR_TERMINATORS[TK_EXPR_TERMINATORS_LEN] = {
 static const TokenKind TK_LITERALS[TK_LITERALS_LEN] = {
     TK_UNIT, TK_TRUE, TK_FALSE, TK_UNIT, TK_INT, TK_FLOAT, TK_STRING};
 
-inline Parser Parser_new(const String file_name, const String source) {
+Parser Parser_new(const String file_name, const String source) {
     return (Parser){
         .file_name = file_name,
         .source = source,
@@ -185,6 +185,7 @@ static ASTResult parse_literal(Parser *self) {
         };
         break;
     }
+    default:
         // Any other value should be unreachable
         UNREACHABLE;
     }
@@ -470,7 +471,9 @@ FAILURE:
 static ParseResult parse_expr(Parser *self) {
     // Parse base terms surrounded by any unary ops, followed by any binary ops
     // Parse let and fun
-    return (ParseResult){};
+    return (ParseResult){
+        .tag = RESULT_OK,
+    };
 }
 
 ParseResult Parser_parse_expr(Parser *self) {
@@ -570,11 +573,14 @@ void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream) {
         fputs("unexpected token\n", stream);
         span = error.error.unexpected_token.span;
         break;
+    default:
+        // To get MSVC to stfu
+        UNREACHABLE;
     }
     LineInfo line_info = get_line_nums(
         (String){.buffer = self->source.buffer, .length = self->source.length},
         span.start);
-    size_t num_digits = floor(log10((double)line_info.line_num) + 1.0);
+    size_t num_digits = (size_t)(log10((double)line_info.line_num) + 1.0);
     write_repeat(' ', num_digits + 2, stream);
     fputs("\x1b[37m┌─[\x1b[0m", stream);
     String_write(self->file_name, stream);
