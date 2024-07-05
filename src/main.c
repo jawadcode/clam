@@ -80,7 +80,7 @@ void run(const String source) {
     Parser_free(&parser);
 }
 
-StringBuf read_line() {
+StringBuf read_line(void) {
     StringBuf str = StringBuf_new();
     char c = (char)fgetc(stdin);
     while (c != '\n' && c != EOF) {
