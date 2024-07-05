@@ -40,7 +40,10 @@ static String binop_to_string(AST_BinOp op) {
         return STR("==");
     case BINOP_NEQ:
         return STR("!=");
-        UNREACHABLE;
+    case BINOP_APPEND:
+        return STR("::");
+    case BINOP_CONCAT:
+        return STR("++");
     }
 }
 
