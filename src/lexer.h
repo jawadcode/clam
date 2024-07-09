@@ -1,9 +1,9 @@
 #ifndef CLAM_LEXER_H
 #define CLAM_LEXER_H
 
-#include <stdlib.h>
-
 #include "common.h"
+#include "maybe.h"
+#include "string.h"
 #include "vec.h"
 
 // An enumeration of the different kinds of tokens
@@ -74,10 +74,7 @@ typedef struct {
 
 // Uninitialised if 'tag == MAYBE_NONE' and initialised if 'tag == MAYBE_SOME'
 typedef struct {
-    enum {
-        MAYBE_SOME,
-        MAYBE_NONE,
-    } tag;
+    MaybeTag tag;
     Token some;
 } MaybeToken;
 

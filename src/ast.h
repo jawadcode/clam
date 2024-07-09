@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "string.h"
 #include "vec.h"
 
 // A type alias which represents the index into the arena of nodes

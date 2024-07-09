@@ -3,9 +3,9 @@
 #include <string.h>
 
 #include "ast.h"
-#include "common.h"
 #include "lexer.h"
 #include "parser.h"
+#include "string.h"
 
 // Ensure cmd.length > 2
 static inline bool match_rest(const String cmd, const char *rest) {
@@ -141,6 +141,5 @@ int main(int argc, char **argv) {
         puts("Clam Interpreter:\n");
         repl();
     }
-
     return 0;
 }

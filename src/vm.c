@@ -1,5 +1,3 @@
-#include <string.h>
-
 #include "vm.h"
 
 bool VM_Value_eq(VM_Value a, VM_Value b) {

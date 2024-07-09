@@ -1,7 +1,6 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdint.h>
-#include <stdlib.h>
 
 #include "ast.h"
 #include "common.h"
@@ -467,6 +466,22 @@ static ParseResult parse_term(Parser *self) {
 FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
+
+// This is guaranteed to be fed a valid tokenkind, hence why it just returns an int
+static int8_t prefix_binding_power(TokenKind kind) {
+	switch (kind) {
+	case TK_SUB:
+	case TK_NOT:
+		return 51;
+	default:
+		UNREACHABLE;
+	}
+}
+
+typedef struct MaybeInt {
+	MaybeTag tag;
+	int some;
+} OptionalInt;
 
 static ParseResult parse_expr(Parser *self) {
     // Parse base terms surrounded by any unary ops, followed by any binary ops

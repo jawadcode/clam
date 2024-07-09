@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "common.h"
+#include "string.h"
 #include "vec.h"
 
 typedef enum VM_Op {

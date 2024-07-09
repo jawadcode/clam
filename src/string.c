@@ -1,8 +1,10 @@
-#include "common.h"
-#include "memory.h"
-#include "vec.h"
+#include "string.h"
+
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "vec.h"
 
 void String_print(String string) {
     fwrite(string.buffer, sizeof(char), string.length, stdout);

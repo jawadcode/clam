@@ -13,14 +13,15 @@ m_dep = cc.find_library('m', required : false)
 executable(
   'clam',
   sources : [
-    'src/memory.c',
-    'src/common.c',
-    'src/lexer.c',
     'src/ast.c',
-    'src/parser.c',
     'src/compiler.c',
+    'src/lexer.c',
+    'src/memory.c',
+    'src/parser.c',
+    'src/string.c',
     'src/vm.c',
-    'src/main.c',
+
+    'src/main.c'
   ],
   dependencies : m_dep
 )
