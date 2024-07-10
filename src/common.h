@@ -2,6 +2,7 @@
 #define CLAM_COMMON_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define DEBUG_MODE
 

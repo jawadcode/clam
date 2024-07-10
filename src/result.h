@@ -34,13 +34,4 @@ typedef enum {
             ident = res.value.ok;                                              \
     } while (0)
 
-#define RET_OK(ResultType, result)                                             \
-    do {                                                                       \
-        ResultType res = result;                                               \
-        if (res.tag == RESULT_ERR) {                                           \
-            error = res.value.ok;                                              \
-            goto FAILURE;                                                      \
-        }                                                                      \
-    } while (0)
-
 #endif

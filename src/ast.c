@@ -53,7 +53,6 @@ static String unop_to_string(AST_UnOp op) {
         return STR("not");
     case UNOP_NEGATE:
         return STR("-");
-        UNREACHABLE;
     }
 }
 

@@ -1,3 +1,5 @@
+#include "src/maybe.h"
+#include <stdio.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdint.h>
@@ -206,7 +208,7 @@ FAILURE:
 }
 
 static AST parse_ident(Parser *self) {
-    Token current = next(self);
+    Span curr_span = next(self).span;
 
     return (AST){
         .tag = AST_IDENT,
@@ -214,12 +216,11 @@ static AST parse_ident(Parser *self) {
             {
                 .ident =
                     {
-                        .buffer =
-                            self->lexer.source.buffer + current.span.start,
-                        .length = current.span.end - current.span.start,
+                        .buffer = self->lexer.source.buffer + curr_span.start,
+                        .length = curr_span.end - curr_span.start,
                     },
             },
-        .span = current.span};
+        .span = curr_span};
 }
 
 static inline Span current_span(Parser *self) {
@@ -250,7 +251,7 @@ static TokenResult expect(Parser *self, TokenKind kind) {
     }
 }
 
-static bool at(Parser *self, TokenKind kind) {
+static inline bool at(Parser *self, TokenKind kind) {
     return peek(self)->kind == kind;
 }
 
@@ -263,6 +264,8 @@ static bool at_any(Parser *self, const TokenKind list[], size_t length) {
 
     return false;
 }
+
+static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power);
 
 static ParseResult parse_expr(Parser *self);
 
@@ -281,7 +284,7 @@ static ParseResult parse_abstraction(Parser *self) {
     RET_ERR(TokenResult, expect(self, TK_ARROW));
 
     ASTIndex abs;
-    RET_ERR_ASSIGN(abs, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(abs, ParseResult, parse_expr(self));
     Span abs_span = {.start = fun_token.span.start,
                      .end = self->ast_arena.buffer[abs].span.end};
     for (size_t i = args.length; i > 0; i--) {
@@ -313,7 +316,7 @@ static ASTResult parse_print(Parser *self) {
     SyntaxError error;
     Span span = {.start = next(self).span.start};
     ASTIndex expr;
-    RET_ERR_ASSIGN(expr, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(expr, ParseResult, parse_expr(self));
     span.end = self->ast_arena.buffer[expr].span.end;
     AST print = {
         .tag = AST_PRINT,
@@ -332,13 +335,13 @@ static ASTResult parse_if_then(Parser *self) {
     SyntaxError error;
     Span span = (Span){.start = next(self).span.start};
     ASTIndex cond;
-    RET_ERR_ASSIGN(cond, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(cond, ParseResult, parse_expr(self));
     RET_ERR(TokenResult, expect(self, TK_THEN));
     ASTIndex then;
-    RET_ERR_ASSIGN(then, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(then, ParseResult, parse_expr(self));
     RET_ERR(TokenResult, expect(self, TK_ELSE));
     ASTIndex else_;
-    RET_ERR_ASSIGN(else_, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(else_, ParseResult, parse_expr(self));
     span.end = self->ast_arena.buffer[else_].span.end;
     AST if_then = {
         .tag = AST_IF_ELSE,
@@ -365,7 +368,7 @@ static ASTResult parse_let_binding(Parser *self) {
                         .length = ident_span.end - ident_span.start};
         RET_ERR(TokenResult, expect(self, TK_ASSIGN));
         ASTIndex value;
-        RET_ERR_ASSIGN(value, ParseResult, Parser_parse_expr(self));
+        RET_ERR_ASSIGN(value, ParseResult, parse_expr(self));
         AST_LetBindVec_push(&binds, (AST_LetBind){ident_span, ident, value});
         Token *peeked = peek(self);
         if (peeked->kind == TK_COMMA) {
@@ -374,7 +377,7 @@ static ASTResult parse_let_binding(Parser *self) {
     }
     RET_ERR(TokenResult, expect(self, TK_IN));
     ASTIndex body;
-    RET_ERR_ASSIGN(body, ParseResult, Parser_parse_expr(self));
+    RET_ERR_ASSIGN(body, ParseResult, parse_expr(self));
     span.end = self->ast_arena.buffer[body].span.end;
     AST let_in = (AST){
         .tag = AST_LET_IN,
@@ -389,13 +392,81 @@ FAILURE:
 
 static ParseResult parse_term(Parser *self);
 
-static ASTResult parse_unop(Parser *self) {
+// This is guaranteed to be fed a valid tokenkind, hence why it just returns an
+// int
+static uint8_t prefix_binding_power(AST_UnOp op) {
+    switch (op) {
+    case UNOP_NEGATE:
+        return 13;
+    case UNOP_NOT: // Stronger than logical connectives but weaker than all
+                   // other operators to make usage of `not` a little more
+                   // natural, as it corresponds better to natural language
+                   // (stole this operator precedence from python)
+        return 5;
+    default:
+        UNREACHABLE;
+    }
+}
+
+// Returns -1 for failure, otherwise writes to `left` and `right` (and returns
+// 0)
+static int8_t infix_binding_power(AST_BinOp op, uint8_t *left, uint8_t *right) {
+    switch (op) {
+    case BINOP_OR: {
+        *left = 1;
+        *right = 2;
+        break;
+    }
+    case BINOP_AND: {
+        *left = 3;
+        *right = 4;
+        break;
+    }
+    case BINOP_EQ:
+    case BINOP_NEQ: {
+        *left = 6;
+        *right = 7;
+        break;
+    }
+    case BINOP_LT:
+    case BINOP_GT:
+    case BINOP_LEQ:
+    case BINOP_GEQ: {
+        *left = 8;
+        *right = 9;
+        break;
+    }
+    case BINOP_ADD:
+    case BINOP_SUB: {
+        *left = 10;
+        *right = 11;
+        break;
+    }
+    case BINOP_MUL:
+    case BINOP_DIV:
+    case BINOP_MOD: {
+        *left = 12;
+        *right = 13;
+        break;
+    }
+    default:
+        return -1;
+    }
+    return 0;
+}
+
+static ASTResult parse_prefix_op(Parser *self) {
     SyntaxError error;
     Token op_token = next(self);
     Span op_span = op_token.span;
     AST_UnOp op = op_token.kind == TK_NOT ? UNOP_NOT : UNOP_NEGATE;
+
+    uint8_t right_binding_power = prefix_binding_power(op);
+
     ASTIndex operand;
-    RET_ERR_ASSIGN(operand, ParseResult, parse_term(self));
+    RET_ERR_ASSIGN(operand, ParseResult,
+                   parse_expr_bp(self, right_binding_power));
+
     AST unop = (AST){.tag = AST_UNARY_OP,
                      .value = {.unary_op = (AST_UnaryOp){op_span, op, operand}},
                      .span = {.start = op_span.start,
@@ -411,7 +482,7 @@ static ASTResult parse_list(Parser *self) {
     AST_List items = AST_List_new();
     while (!at_any(self, (TokenKind[]){TK_COMMA, TK_RCURLY}, 2)) {
         ASTIndex item;
-        RET_ERR_ASSIGN(item, ParseResult, Parser_parse_expr(self));
+        RET_ERR_ASSIGN(item, ParseResult, parse_expr(self));
         AST_List_push(&items, item);
         if (at(self, TK_COMMA)) {
             next(self);
@@ -436,67 +507,92 @@ FAILURE:
     return (ASTResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
+static ParseResult parse_grouping(Parser *self) {
+    SyntaxError error;
+    size_t span_start = next(self).span.start;
+    ASTIndex grouped;
+    RET_ERR_ASSIGN(grouped, ParseResult, parse_expr(self));
+    Token rparen;
+    RET_ERR_ASSIGN(rparen, TokenResult, expect(self, TK_RPAREN));
+    size_t span_end = rparen.span.end;
+    // Icky but I want to keep `parse_expr` as it is
+    self->ast_arena.buffer[grouped].span =
+        (Span){.start = span_start, .end = span_end};
+    return (ParseResult){.tag = RESULT_OK, .value = {.ok = grouped}};
+FAILURE:
+    return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
+}
+
 static ParseResult parse_term(Parser *self) {
     SyntaxError error;
-    if (at(self, TK_LPAREN)) {
-        size_t span_start = next(self).span.start;
-        ASTIndex grouped;
-        RET_ERR_ASSIGN(grouped, ParseResult, parse_expr(self));
-        Token rparen;
-        RET_ERR_ASSIGN(rparen, TokenResult, expect(self, TK_RPAREN));
-        size_t span_end = rparen.span.end;
-        // Icky but I want to keep `parse_expr` as it is
-        self->ast_arena.buffer[grouped].span =
-            (Span){.start = span_start, .end = span_end};
-        return (ParseResult){.tag = RESULT_OK, .value = {.ok = grouped}};
-    } else if (at_any(self, TK_LITERALS, TK_LITERALS_LEN)) {
-        AST lit_ast;
-        RET_ERR_ASSIGN(lit_ast, ASTResult, parse_literal(self));
-        ASTIndex lit = ASTVec_push(&self->ast_arena, lit_ast);
-        return (ParseResult){.tag = RESULT_OK, .value = {.ok = lit}};
-    } else {
+    AST term_ast;
+    TokenKind peeked = peek(self)->kind;
+    switch (peeked) {
+    case TK_UNIT:
+    case TK_TRUE:
+    case TK_FALSE:
+    case TK_INT:
+    case TK_FLOAT:
+    case TK_STRING:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_literal(self));
+        break;
+    case TK_LCURLY:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_list(self));
+        break;
+    case TK_FUN:
+        return parse_abstraction(self);
+    case TK_IF:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_if_then(self));
+        break;
+    case TK_LET:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_let_binding(self));
+        break;
+    case TK_IDENT:
+        term_ast = parse_ident(self);
+        break;
+    case TK_SUB:
+    case TK_NOT:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_prefix_op(self));
+        break;
+    case TK_LPAREN:
+        return parse_grouping(self);
+    default: {
         Token err_tok = next(self);
         error = (SyntaxError){
             .tag = ERROR_UNEXPECTED_TOKEN,
             .error = {.unexpected_token = {.expected = STR("expression"),
                                            .got = err_tok,
                                            .span = err_tok.span}}};
-        // fallthrough to FAILURE
+        goto FAILURE;
     }
+    }
+    ASTIndex term = ASTVec_push(&self->ast_arena, term_ast);
+    return (ParseResult){.tag = RESULT_OK, .value = {.ok = term}};
 FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
-// This is guaranteed to be fed a valid tokenkind, hence why it just returns an int
-static int8_t prefix_binding_power(TokenKind kind) {
-	switch (kind) {
-	case TK_SUB:
-	case TK_NOT:
-		return 51;
-	default:
-		UNREACHABLE;
-	}
-}
+static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power) {
+    SyntaxError error;
+    ASTIndex lhs;
+    RET_ERR_ASSIGN(lhs, ParseResult, parse_term(self));
 
-typedef struct MaybeInt {
-	MaybeTag tag;
-	int some;
-} OptionalInt;
-
-static ParseResult parse_expr(Parser *self) {
-    // Parse base terms surrounded by any unary ops, followed by any binary ops
-    // Parse let and fun
     return (ParseResult){
         .tag = RESULT_OK,
+        .value = {.ok = lhs},
     };
+FAILURE:
+    return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
+
+static ParseResult parse_expr(Parser *self) { return parse_expr_bp(self, 0); }
 
 ParseResult Parser_parse_expr(Parser *self) {
     SyntaxError error;
-    ASTIndex result;
-    RET_ERR_ASSIGN(result, ParseResult, parse_expr(self));
-    expect(self, TK_EOF);
-    return (ParseResult){.tag = RESULT_OK, .value = {.ok = result}};
+    ASTIndex ast;
+    RET_ERR_ASSIGN(ast, ParseResult, parse_expr(self));
+    RET_ERR(TokenResult, expect(self, TK_EOF));
+    return (ParseResult){.tag = RESULT_OK, .value = {.ok = ast}};
 FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }

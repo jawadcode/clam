@@ -62,7 +62,6 @@ void run(const String source) {
     putchar('\n');
     switch (result.tag) {
     case RESULT_OK: {
-
         StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
         puts("Parser Output:");
         StringBuf_print(sexpr);
