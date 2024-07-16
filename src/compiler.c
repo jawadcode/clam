@@ -5,7 +5,6 @@
 
 #include "ast.h"
 #include "compiler.h"
-#include "lexer.h"
 #include "result.h"
 #include "vec.h"
 #include "vm.h"

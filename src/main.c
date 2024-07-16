@@ -3,9 +3,10 @@
 #include <string.h>
 
 #include "ast.h"
-#include "lexer.h"
 #include "parser.h"
 #include "string.h"
+
+#define CLAM_VERSION_STRING "0.1.0"
 
 // Ensure cmd.length > 2
 static inline bool match_rest(const String cmd, const char *rest) {
@@ -14,11 +15,11 @@ static inline bool match_rest(const String cmd, const char *rest) {
     return strncmp(cmd.buffer + 1, rest, cmd.length - 1) == 0;
 }
 
-void print_help(void) {
-    puts("\nCommands:\n"
+void print_repl_help(void) {
+    puts("Commands:\n"
          "  :exit - Exit the REPL\n"
          "  :help - Display this help message\n"
-         "  :quit - Quit the REPL\n");
+         "  :quit - Quit the REPL");
 }
 
 void run_cmd(const String cmd) {
@@ -31,13 +32,13 @@ void run_cmd(const String cmd) {
             goto UNKNOWN_COMMAND;
     case 'h':
         if (match_rest(cmd, "elp")) {
-            print_help();
+            print_repl_help();
             break;
         } else
             goto UNKNOWN_COMMAND;
     case 'q':
         if (match_rest(cmd, "uit")) {
-            puts("Bye bye...\n");
+            puts("Bye bye...");
             exit(0);
         } else
             goto UNKNOWN_COMMAND;
@@ -46,7 +47,7 @@ void run_cmd(const String cmd) {
         fputs("\x1b[31;1mError\x1b[0m: Unknown command '", stderr);
         String_print(cmd);
         putchar('\'');
-        print_help();
+        print_repl_help();
         break;
     }
 }
@@ -54,7 +55,6 @@ void run_cmd(const String cmd) {
 void run(const String source) {
     Parser parser = Parser_new(STR("stdin"), source);
     ParseResult result = Parser_parse_expr(&parser);
-    putchar('\n');
     switch (result.tag) {
     case RESULT_OK: {
         StringBuf sexpr = format_ast(&parser.ast_arena, result.value.ok);
@@ -89,7 +89,7 @@ StringBuf read_line(void) {
 
 void repl(void) {
     while (true) {
-        fputs("$ ", stdout);
+        fputs("\n$ ", stdout);
         fflush(stdout);
         StringBuf line = read_line();
         if (line.length > 2 && line.buffer[0] == ':') {
@@ -130,7 +130,8 @@ int main(int argc, char **argv) {
         const char *path = argv[1];
         run_file(path);
     } else {
-        puts("Clam Interpreter:\n");
+        puts("Clam REPL v" CLAM_VERSION_STRING "\n"
+             "Type ':help' for more information");
         repl();
     }
     return 0;
