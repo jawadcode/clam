@@ -381,11 +381,15 @@ static uint8_t prefix_binding_power(AST_UnOp op) {
     switch (op) {
     case UNOP_NEGATE:
         return 13;
-    case UNOP_NOT: // Stronger than logical connectives but weaker than all
-                   // other operators to make usage of `not` a little more
-                   // natural, as it corresponds better to natural language
-                   // (stole this operator precedence from python)
-        return 5;
+    case UNOP_NOT:
+        // Typically the binding power of `!` is stronger than logical
+        // connectives but weaker than all other operators so that `!` can be
+        // easily used on variables but not interfere with those other
+        // operators, however since we are using `not`, I have chosen the
+        // weakest binding power, as it corresponds better to natural language,
+        // and makes negated if conditions cleaner, e.g `if not (A and B) then
+        // ...` vs `if not A and B then ...` (idea stolen from python).
+        return 1;
     default:
         UNREACHABLE;
     }
@@ -396,13 +400,13 @@ static uint8_t prefix_binding_power(AST_UnOp op) {
 static bool infix_binding_power(AST_BinOp op, uint8_t *left, uint8_t *right) {
     switch (op) {
     case BINOP_OR: {
-        *left = 1;
-        *right = 2;
+        *left = 2;
+        *right = 3;
         break;
     }
     case BINOP_AND: {
-        *left = 3;
-        *right = 4;
+        *left = 4;
+        *right = 5;
         break;
     }
     case BINOP_EQ:
