@@ -380,15 +380,15 @@ static ParseResult parse_term(Parser *self);
 static uint8_t prefix_binding_power(AST_UnOp op) {
     switch (op) {
     case UNOP_NEGATE:
-        return 13;
+        return 18;
     case UNOP_NOT:
-        // Typically the binding power of `!` is stronger than logical
-        // connectives but weaker than all other operators so that `!` can be
-        // easily used on variables but not interfere with those other
-        // operators, however since we are using `not`, I have chosen the
-        // weakest binding power, as it corresponds better to natural language,
-        // and makes negated if conditions cleaner, e.g `if not (A and B) then
-        // ...` vs `if not A and B then ...` (idea stolen from python).
+        /* Typically the binding power of `!` is stronger than logical
+           connectives but weaker than all other operators so that `!` can be
+           easily used on variables but not interfere with those other
+           operators, however since we are using `not`, I have chosen the
+           weakest binding power, as it corresponds better to natural language,
+           and makes negated if conditions cleaner, e.g `if not (A and B) then
+           ...` vs `if not A and B then ...` (idea stolen from python). */
         return 1;
     default:
         UNREACHABLE;
@@ -397,45 +397,67 @@ static uint8_t prefix_binding_power(AST_UnOp op) {
 
 // Returns false for failure, otherwise writes to `left` and `right` (and
 // returns true)
-static bool infix_binding_power(AST_BinOp op, uint8_t *left, uint8_t *right) {
+static bool infix_binding_power(TokenKind op, uint8_t *left, uint8_t *right) {
     switch (op) {
-    case BINOP_OR: {
+    case TK_OR: {
         *left = 2;
         *right = 3;
         break;
     }
-    case BINOP_AND: {
+    case TK_AND: {
         *left = 4;
         *right = 5;
         break;
     }
-    case BINOP_EQ:
-    case BINOP_NEQ: {
-        *left = 6;
-        *right = 7;
+    case TK_EQ:
+    case TK_NEQ:
+    case TK_LT:
+    case TK_GT:
+    case TK_LEQ:
+    case TK_GEQ:
+    case TK_FNPIPE: {
+        // Changed to left associative because `|>` requires it and it doesn't
+        // affect relational operators as you can't chain comparisons anyways,
+        // this isn't python smh.
+        // Also grouped together equality and comparison operators because I
+        // have no idea where `|>` would slot in were they separate (I'm copying
+        // OCaml here)
+        *left = 7;
+        *right = 6;
         break;
     }
-    case BINOP_LT:
-    case BINOP_GT:
-    case BINOP_LEQ:
-    case BINOP_GEQ: {
-        *left = 8;
-        *right = 9;
+    case TK_APPEND: {
+        // Left associative because it constructs a Snoc and not a Cons list.
+        // Not entirely sure if this logic is sound but I guess we will see.
+        *left = 9;
+        *right = 8;
         break;
     }
-    case BINOP_ADD:
-    case BINOP_SUB: {
+    case TK_ADD:
+    case TK_SUB: {
         *left = 10;
         *right = 11;
         break;
     }
-    case BINOP_MUL:
-    case BINOP_DIV:
-    case BINOP_MOD: {
+    case TK_MUL:
+    case TK_DIV:
+    case TK_MOD: {
         *left = 12;
         *right = 13;
         break;
     }
+    case TK_CONCAT: {
+        *left = 14;
+        *right = 15;
+    }
+        // clang-format off
+	/* For completeness' sake:
+	case TK_APP: {
+		*left = 16;
+		*right = 17;
+		break;
+	} */
+        // clang-format on
     default:
         return false;
     }
@@ -559,6 +581,23 @@ FAILURE:
     return (ParseResult){.tag = RESULT_ERR, .value = {.err = error}};
 }
 
+#define BINOP_TOKENS_LEN 17
+static const TokenKind BINOP_TOKENS[BINOP_TOKENS_LEN] = {
+    TK_FNPIPE, TK_APPEND, TK_CONCAT, TK_ADD, TK_SUB, TK_MUL,
+    TK_DIV,    TK_MOD,    TK_NOT,    TK_AND, TK_OR,  TK_LT,
+    TK_LEQ,    TK_GT,     TK_GEQ,    TK_EQ,  TK_NEQ,
+};
+
+#define EXPR_TERMINATORS_LEN 8
+static const TokenKind EXPR_TERMINATORS[EXPR_TERMINATORS_LEN] = {
+    TK_IN, TK_THEN, TK_ELSE, TK_RPAREN, TK_RSQUARE, TK_RCURLY, TK_COMMA, TK_EOF,
+};
+
+#define TERM_TOKENS_LEN 9
+static const TokenKind TERM_TOKENS[TERM_TOKENS_LEN] = {
+    TK_UNIT,   TK_TRUE,   TK_FALSE, TK_INT,   TK_FLOAT,
+    TK_STRING, TK_LCURLY, TK_IDENT, TK_LPAREN};
+
 static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power) {
     SyntaxError error;
     ASTIndex lhs;
@@ -566,35 +605,12 @@ static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power) {
 
     while (true) {
         TokenKind op = peek(self)->kind;
-        switch (op) {
-        case TK_FNPIPE:
-        case TK_APPEND:
-        case TK_CONCAT:
-        case TK_ADD:
-        case TK_SUB:
-        case TK_MUL:
-        case TK_DIV:
-        case TK_MOD:
-        case TK_NOT:
-        case TK_AND:
-        case TK_OR:
-        case TK_LT:
-        case TK_LEQ:
-        case TK_GT:
-        case TK_GEQ:
-        case TK_EQ:
-        case TK_NEQ:
+        if (at_any(self, BINOP_TOKENS, BINOP_TOKENS_LEN) ||
+            at_any(self, TERM_TOKENS, TERM_TOKENS_LEN)) {
+            // noop
+        } else if (at_any(self, EXPR_TERMINATORS, EXPR_TERMINATORS_LEN)) {
             break;
-        case TK_IN:
-        case TK_THEN:
-        case TK_ELSE:
-        case TK_RPAREN:
-        case TK_RSQUARE:
-        case TK_RCURLY:
-        case TK_COMMA:
-        case TK_EOF:
-            goto BREAK_AND_SKIP;
-        default: {
+        } else {
             Token tok = next(self);
             return (ParseResult){
                 .tag = RESULT_ERR,
@@ -608,10 +624,9 @@ static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power) {
                                       .span = tok.span,
                                   }}}}};
         }
-        }
 
         uint8_t left_binding_power, right_binding_power;
-        if (infix_binding_power((AST_BinOp)op, &left_binding_power,
+        if (infix_binding_power(op, &left_binding_power,
                                 &right_binding_power)) {
             if (left_binding_power < binding_power)
                 break;
@@ -633,10 +648,21 @@ static ParseResult parse_expr_bp(Parser *self, uint8_t binding_power) {
                        .span = {.start = self->ast_arena.buffer[lhs].span.start,
                                 .end = get_end(self, rhs)}};
             lhs = ASTVec_push(&self->ast_arena, ast);
-            continue;
         }
-    BREAK_AND_SKIP:
-        break;
+        if (at_any(self, TERM_TOKENS, TERM_TOKENS_LEN)) {
+            if (16 < binding_power)
+                break;
+
+            ASTIndex arg;
+            RET_ERR_ASSIGN(arg, ParseResult, parse_expr_bp(self, 17));
+
+            AST ast = {
+                .tag = AST_APPLICATION,
+                .value = {.application = {.function = lhs, .argument = arg}},
+                .span = {.start = self->ast_arena.buffer[lhs].span.start,
+                         .end = get_end(self, arg)}};
+            lhs = ASTVec_push(&self->ast_arena, ast);
+        }
     }
 
     return (ParseResult){

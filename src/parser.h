@@ -26,6 +26,7 @@ typedef struct SyntaxError_UnexpectedToken {
     // 'expected.length' should exclude the null terminator (which should be
     // present)
     String expected;
+	// TODO: Remove `span`, or change `got` to `TokenKind`
     Token got;
     Span span;
 } SyntaxError_UnexpectedToken;

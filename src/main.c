@@ -53,11 +53,6 @@ void run_cmd(const String cmd) {
 
 void run(const String source) {
     Parser parser = Parser_new(STR("stdin"), source);
-    puts("Lexer Output:");
-    for (Token tok = Lexer_next_token(&parser.lexer); tok.kind != TK_EOF;
-         tok = Lexer_next_token(&parser.lexer))
-        Token_print(parser.source, tok);
-    parser.lexer = Lexer_new(parser.source);
     ParseResult result = Parser_parse_expr(&parser);
     putchar('\n');
     switch (result.tag) {
@@ -125,9 +120,7 @@ void run_file(const char *path) {
 
     fclose(file);
     String f = {.buffer = buffer, .length = file_size};
-    putchar('%');
     String_print(f);
-    putchar('%');
     run(f);
     free(buffer);
 }

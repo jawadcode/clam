@@ -1,12 +1,9 @@
-#define _USE_MATH_DEFINES
-#include <math.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include "ast.h"
-#include "common.h"
 
 DEF_VEC(AST, ASTVec)
 
@@ -122,8 +119,15 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
     case AST_LET_IN: {
         AST_LetIn *let_in = &node->value.let_in;
         StringBuf_push_string(buf, STR("(let ["));
-        for (size_t i = 0; i < let_in->bindings.length; i++) {
-            StringBuf_push(buf, '(');
+        StringBuf_push(buf, '(');
+
+        AST_LetBind binding = let_in->bindings.buffer[0];
+        StringBuf_push_string(buf, binding.ident);
+        StringBuf_push(buf, ' ');
+        format_ast_node(arena, binding.value, buf);
+        StringBuf_push(buf, ')');
+        for (size_t i = 1; i < let_in->bindings.length; i++) {
+            StringBuf_push_string(buf, STR(" ("));
             AST_LetBind binding = let_in->bindings.buffer[i];
             StringBuf_push_string(buf, binding.ident);
             StringBuf_push(buf, ' ');
