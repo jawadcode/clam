@@ -1,5 +1,5 @@
 builddir
-.cache
-.idea
-.vscode
+result
 compile_commands.json
+.direnv
+.cache

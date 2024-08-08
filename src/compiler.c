@@ -113,8 +113,8 @@ static VoidCompileResult compile_ident(Compiler *compiler, VM_Chunk *chunk,
                     .err = {.not_found = {.span = span, .not_found = ident}}}}};
 }
 
-static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
-                                     size_t index);
+static VoidCompileResult compile_expr(Compiler *compiler, VM_Chunk *chunk,
+                                      size_t index);
 
 // Another beautiful demonstration of the power of stack machines, we can
 // compile list initialisers by compiling each sub-expression and appending it
@@ -133,7 +133,7 @@ static VoidCompileResult compile_list(Compiler *compiler, VM_Chunk *chunk,
     CodeVec_push(&chunk->code, empty);
     for (size_t i = 0; i < list.length; i++) {
         ASTIndex item = list.buffer[i];
-        RET_ERR(VoidCompileResult, compile_ast(compiler, chunk, item));
+        RET_ERR(VoidCompileResult, compile_expr(compiler, chunk, item));
         CodeVec_push(&chunk->code, (uint16_t)VM_OP_APPEND);
     }
     return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
@@ -157,15 +157,15 @@ static VoidCompileResult compile_let_in(Compiler *compiler, VM_Chunk *chunk,
                                              .source = bind.ident,
                                              .depth = compiler->scope_depth,
                                          });
-        compile_ast(compiler, chunk, bind.value);
+        compile_expr(compiler, chunk, bind.value);
     }
-    compile_ast(compiler, chunk, let_in.body);
+    compile_expr(compiler, chunk, let_in.body);
     compiler->scope_depth--;
     return (VoidCompileResult){.tag = RESULT_OK, .value = {.ok = NULL}};
 }
 
-static VoidCompileResult compile_ast(Compiler *compiler, VM_Chunk *chunk,
-                                     size_t index) {
+static VoidCompileResult compile_expr(Compiler *compiler, VM_Chunk *chunk,
+                                      ASTIndex index) {
     AST ast = compiler->arena.buffer[index];
     switch (ast.tag) {
     case AST_LITERAL:
@@ -204,7 +204,7 @@ CompileResult compile(String source, ASTVec arena, size_t index) {
         .constants = ValueVec_new(),
         .code = CodeVec_new(),
     };
-    RET_ERR(VoidCompileResult, compile_ast(&compiler, &chunk, index));
+    RET_ERR(VoidCompileResult, compile_expr(&compiler, &chunk, index));
     LocalVec_free(&compiler.locals);
     return (CompileResult){.tag = RESULT_OK, .value = {.ok = chunk}};
 FAILURE:

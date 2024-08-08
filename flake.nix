@@ -22,7 +22,7 @@
           pkgs = nixpkgs.legacyPackages.${system};
         in
         rec {
-          clam = pkgs.stdenv.mkDerivation rec {
+          clam = pkgs.clang18Stdenv.mkDerivation rec {
             pname = "clam";
             version = "0.1.0";
             src = ./.;
@@ -39,7 +39,7 @@
 
             meta = {
               homepage = "https://github.com/jawadcode/clam";
-              license = with pkgs.lib.licenses; [ mit ];
+              license = [ pkgs.lib.licenses.mit ];
               maintainers = [ "Jawad W. Ahmed" ];
             };
           };
@@ -58,9 +58,9 @@
             default = pkgs.mkShell.override { stdenv = pkgs.clang18Stdenv; }
               {
                 inputsFrom = lib.attrValues self.packages;
-                packages = [
-                  pkgs.mesonlsp
-                  pkgs.clang-tools
+                packages = with pkgs; [
+                  mesonlsp
+                  clang-tools
                 ];
               };
           });
