@@ -8,11 +8,12 @@ Functional, bytecode interpreted language written in C
 
 ```bash
 # Release
-meson setup builddir/release -Dbuildtype=release -Db_lto=true
+meson setup builddir/release --buildtype release -Db_lto=true
 meson compile -C builddir/release
 
 # Debug
-meson setup builddir/debug -Dbuildtype=debug -Db_sanitize=address,undefined
+# You may also use "--buildtype=debug" but this causes weird `_FORTIFY_SOURCE` warnings with clang18Stdenv.
+meson setup builddir/debug --buildtype debugoptimized -Db_sanitize=address,undefined
 meson compile -C builddir/debug
 ```
 

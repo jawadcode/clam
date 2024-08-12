@@ -1,27 +1,30 @@
 project(
-  'clam',
-  'c',
-  default_options : [
-    'warning_level=3',
-    'c_std=c18'
-  ]
+    'clam',
+    'c',
+    default_options: [
+        'warning_level=3',
+        'werror=true',
+        'c_std=c2x',
+        'default_library=static',
+        'prefer_static=true',
+    ],
 )
 
 cc = meson.get_compiler('c')
-m_dep = cc.find_library('m', required : false)
+m_dep = cc.find_library('m', required: false)
 
 executable(
-  'clam',
-  sources : [
-    'src/ast.c',
-    'src/compiler.c',
-    'src/lexer.c',
-    'src/memory.c',
-    'src/parser.c',
-    'src/string.c',
-    'src/vm.c',
+    'clam',
+    sources: [
+        'src/ast.c',
+        'src/compiler.c',
+        'src/lexer.c',
+        'src/memory.c',
+        'src/parser.c',
+        'src/string.c',
+        'src/vm.c',
 
-    'src/main.c'
-  ],
-  dependencies : m_dep
+        'src/main.c',
+    ],
+    dependencies: m_dep,
 )
