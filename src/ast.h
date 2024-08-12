@@ -60,9 +60,7 @@ typedef struct AST_Application {
     ASTIndex argument;
 } AST_Application;
 
-// An expression that when evaluated, prints 'expr' and returns the value that
-// was passed to it, akin to the 'dump' function from the 'batteries' OCaml
-// library
+// An expression that when evaluated, prints 'expr' and returns the unit value
 typedef struct AST_Print {
     ASTIndex expr;
 } AST_Print;
