@@ -1,3 +1,4 @@
+#include "string.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdint.h>
@@ -69,6 +70,7 @@ static double parse_float(Parser *self, Span span) {
 }
 
 static ParseStringResult parse_string(Parser *self, Span span) {
+    SyntaxError error;
     const char *str = self->lexer.source.buffer + span.start;
     // The parsed string will always be less than or equal to the length - 2
     // (for the quotes)
@@ -98,23 +100,17 @@ static ParseStringResult parse_string(Parser *self, Span span) {
             default: {
                 size_t start = str + index - self->lexer.source.buffer - 1;
                 size_t end = start + 2;
-                return (ParseStringResult){
-                    .tag = RESULT_ERR,
-                    .value =
-                        {
-                            .err =
-                                (SyntaxError){
-                                    ERROR_INVALID_ESC_SEQ,
-                                    {
-                                        .invalid_esc_seq =
-                                            {
-                                                .string = span,
-                                                .escape_sequence = {start, end},
-                                            },
-                                    },
-                                },
-                        },
+                error = (SyntaxError){
+                    ERROR_INVALID_ESC_SEQ,
+                    {
+                        .invalid_esc_seq =
+                            {
+                                .string = span,
+                                .escape_sequence = {start, end},
+                            },
+                    },
                 };
+                goto FAILURE;
             }
             }
             escaped = false;
@@ -127,6 +123,12 @@ static ParseStringResult parse_string(Parser *self, Span span) {
     return (ParseStringResult){
         .tag = RESULT_OK,
         .value = {.ok = buffer},
+    };
+FAILURE:
+    StringBuf_free(&buffer);
+    return (ParseStringResult){
+        .tag = RESULT_ERR,
+        .value = {.err = error},
     };
 }
 
@@ -547,6 +549,9 @@ static ParseResult parse_term(Parser *self) {
     case TK_LCURLY:
         RET_ERR_ASSIGN(term_ast, ASTResult, parse_list(self));
         break;
+    case TK_PRINT:
+        RET_ERR_ASSIGN(term_ast, ASTResult, parse_print(self));
+        break;
     case TK_FUN:
         return parse_abstraction(self);
     case TK_IF:
@@ -782,13 +787,13 @@ void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream) {
         span.start);
     size_t num_digits = (size_t)(log10((double)line_info.line_num) + 1.0);
     write_repeat(' ', num_digits + 2, stream);
-    fputs("\x1b[37m┌─[\x1b[0m", stream);
+    fputs("┌─[", stream);
     String_write(self->file_name, stream);
     fputc(':', stream);
     write_num(line_info.line_num, stream);
     fputc(':', stream);
     write_num(span.start - line_info.line_start, stream);
-    fputs("\x1b[37m]\n", stream);
+    fputs("]\n", stream);
     write_repeat(' ', num_digits + 2, stream);
     fputs("│\n", stream);
     fputc(' ', stream);
@@ -797,18 +802,16 @@ void Parser_print_diag(Parser *self, SyntaxError error, FILE *stream) {
     String_write((String){.buffer = self->source.buffer + line_info.line_start,
                           .length = span.start - line_info.line_start},
                  stream);
-    fputs("\x1b[0m", stream);
     String_write((String){.buffer = self->source.buffer + span.start,
                           .length = span.end - span.start},
                  stream);
-    fputs("\x1b[37m", stream);
     String_write((String){.buffer = self->source.buffer + span.end,
                           .length = line_info.line_end - span.end},
                  stream);
     fputc('\n', stream);
-    write_repeat(' ', num_digits + 4 + span.start - line_info.line_start,
-                 stream);
-    fputs("\x1b[0m", stream);
+    write_repeat(' ', num_digits + 2, stream);
+    fputs("│", stream);
+    write_repeat(' ', span.start - line_info.line_start + 1, stream);
     write_repeat('^', span.end - span.start, stream);
     fputc('\n', stream);
     write_repeat(' ', num_digits + 4 + span.start - line_info.line_start,
