@@ -3,8 +3,7 @@ project(
     'c',
     default_options: [
         'warning_level=3',
-        'werror=true',
-        'c_std=c2x',
+        'c_std=c18',
         'default_library=static',
         'prefer_static=true',
     ],

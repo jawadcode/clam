@@ -6,52 +6,54 @@
 #include "string.h"
 #include "vec.h"
 
+// Any explicitly defined values in the enum match up with the ones used for
+// `TokenKind`s and `AST_BinOp`.
+
 typedef enum VM_Op {
     /* MISC */
-    // Load a constant from the chunk's constant table
-    VM_OP_CONST,
-    // Bind a variable
-    VM_OP_BIND,
-    // Get a variable
-    VM_OP_GET,
-    // Peek at the top of the stack and print the value to stdout
-    VM_OP_PRINT,
+    // clang-format off
+
+    VM_OP_CONST, // Load a constant from the chunk's constant table.
+    VM_OP_BIND,  // Bind a variable.
+    VM_OP_GET,   // Get a variable.
+    VM_OP_PRINT, // Peek at the top of the stack and print the value to stdout.
 
     /* UNARY OPS */
-    // Check the top of the stack is a boolean, and then NOT it in place
-    VM_OP_NOT = 31,
-    // Check the top of the stack is a number, and then negate it in place
-    VM_OP_NEGATE = 42,
+    VM_OP_NOT    = 31, // Check the top of the stack is a boolean, and then NOT
+                       // it in place.
+    VM_OP_NEGATE = 42, // Check the top of the stack is a number, and then negate
+                       // it in place.
 
     /* BINARY OPS */
-    // Pops RHS from the stack, then modifies the LHS (at the top of the stack)
-    // in place by applying the operation with the RHS to it
+    // Pop RHS from stack, modify the LHS (at the top of the stack) in place by
+    // applying the operation to it (with the RHS).
+	
     VM_OP_APPEND = 24,
     VM_OP_CONCAT = 25,
-    VM_OP_ADD = 26,
-    VM_OP_SUB = 27,
-    VM_OP_MUL = 28,
-    VM_OP_DIV = 29,
-    VM_OP_MOD = 30, // uses fmod
-    VM_OP_AND = 32, // not short-circuiting
-    VM_OP_OR = 33,  // not short-circuiting
-    VM_OP_LT = 34,
-    VM_OP_LEQ = 35,
-    VM_OP_GT = 36,
-    VM_OP_GEQ = 37,
-    VM_OP_EQ = 38,
-    VM_OP_NEQ = 39,
+    VM_OP_ADD    = 26,
+    VM_OP_SUB    = 27,
+    VM_OP_MUL    = 28,
+    VM_OP_DIV    = 29,
+    VM_OP_MOD    = 30, // uses fmod
+    VM_OP_AND    = 32,
+    VM_OP_OR     = 33,
+    VM_OP_LT     = 34,
+    VM_OP_LEQ    = 35,
+    VM_OP_GT     = 36,
+    VM_OP_GEQ    = 37,
+    VM_OP_EQ     = 38,
+    VM_OP_NEQ    = 39,
 
     /* BRANCHING */
-    // Pop the condition off of the stack and if it is true then jump
-    VM_OP_JUMP_IF,
-    // Jump regardless
-    VM_OP_JUMP,
-    // Jump to the start of a function, storing the return address in a register
-    VM_OP_CALL,
-    // Jump back to the return address
-    VM_OP_RET,
+    VM_OP_JUMP_IF, // Pop the condition off of the stack and if it is true then
+                   // jump.
+    VM_OP_JUMP,    // Jump regardless.
+    VM_OP_CALL,    // Jump to the start of a function, storing the return address
+                   // in a register.
+    VM_OP_RET,     // Jump back to the return address.
 } VM_Op;
+
+// clang-format on
 
 typedef struct VM_Chunk VM_Chunk;
 

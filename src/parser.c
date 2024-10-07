@@ -1,4 +1,5 @@
 #include "string.h"
+#include <locale.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdint.h>

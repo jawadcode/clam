@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,6 +127,10 @@ void run_file(const char *path) {
 }
 
 int main(int argc, char **argv) {
+    // Windows doesn't print the table-building characters correctly from my
+    // testing, in both Windows Terminal and Wezterm, so I have to manually set
+    // the locale to a UTF-8 one.
+    setlocale(LC_ALL, ".UTF-8");
     if (argc > 1) {
         const char *path = argv[1];
         run_file(path);
