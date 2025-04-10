@@ -144,13 +144,31 @@ int main(int argc, char **argv) {
     /* } */
 
     IntTable table = IntTable_new();
-    IntTable_set(&table, STR("test"), 123);
-    int test;
-    bool found = IntTable_get(&table, STR("test"), &test);
-    if (found) {
-        printf("'test': %d\n", test);
-    }
-    IntTable_free(&table);
+    IntTable_set(&table, STR("test1"), 123);
+    IntTable_set(&table, STR("test2"), 234);
+    IntTable_set(&table, STR("test3"), 345);
+    IntTable_set(&table, STR("test4"), 456);
+    IntTable_set(&table, STR("test5"), 567);
+    IntTable_set(&table, STR("test6"), 678);
+    IntTable_set(&table, STR("test7"), 789);
+    IntTable_set(&table, STR("test8"), 890);
+    IntTable_set(&table, STR("test9"), 1234);
+    IntTable_delete(&table, STR("test4"));
 
+    int test1;
+    bool found1 = IntTable_get(&table, STR("test1"), &test1);
+    if (found1) {
+        printf("'test1': %d\n", test1);
+    }
+
+    int test4;
+    bool found4 = IntTable_get(&table, STR("test4"), &test4);
+    if (!found4) {
+        printf("Successfully deleted entry 'test4'\n");
+    } else {
+        printf("⚠️\n");
+    }
+
+    IntTable_free(&table);
     return 0;
 }
