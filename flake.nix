@@ -2,14 +2,14 @@
   description = "Functional, bytecode interpreted language written in C";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
 
     # Externally extensible flake systems. See <https://github.com/nix-systems/nix-systems>.
     systems.url = "github:nix-systems/default";
   };
 
   outputs = {
-    self,
+    # self,
     systems,
     nixpkgs,
     ...
@@ -23,7 +23,7 @@
     packages = eachSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
     in rec {
-      clam-debug = pkgs.clang18Stdenv.mkDerivation rec {
+      clam-debug = pkgs.clang19Stdenv.mkDerivation rec {
         pname = "clam";
         version = "0.1.0";
         src = ./.;
@@ -49,7 +49,7 @@
           maintainers = ["Jawad W. Ahmed"];
         };
       };
-      clam-release = pkgs.clang18Stdenv.mkDerivation rec {
+      clam-release = pkgs.clang19Stdenv.mkDerivation rec {
         pname = "clam";
         version = "0.1.0";
         src = ./.;
@@ -58,7 +58,6 @@
         nativeBuildInputs = [pkgs.meson pkgs.ninja];
         mesonBuildType = "release";
         mesonFlags = ["-Db_lto=true" "-Dstrip=true"];
-        enableParallelBuilding = true;
 
         installPhase = ''
           mkdir -p $out/bin/
@@ -79,24 +78,21 @@
       (system: let
         pkgs = nixpkgs.legacyPackages.${system};
       in {
-        testing = pkgs.mkShell {
-          packages = with pkgs; [
-            llvm_18 # Just to get us llvm-symbolizer
-            lldb # Currently at version 18
-            self.packages.${system}.clam-debug
-          ];
-          ASAN_SYMBOLIZER_PATH = "${lib.getExe' pkgs.llvm_18 "llvm-symbolizer"}";
-        };
         default =
-          pkgs.mkShell.override {stdenv = pkgs.clang18Stdenv;}
+          pkgs.mkShell.override {stdenv = pkgs.clang19Stdenv;}
           {
-            inputsFrom = lib.attrValues self.packages.${system};
+            # Want to avoid duplication
+            # inputsFrom = lib.attrValues self.packages.${system};
+            nativeBuildInputs = [pkgs.llvmPackages_19.clang-tools];
             packages = with pkgs; [
-              llvm_18
-              lldb
-              mesonlsp
+              # llvm_19
+              lldb_19
+              meson
+              ninja
               clang-analyzer
+              mesonlsp
             ];
+            ASAN_SYMBOLIZER_PATH = "${lib.getExe' pkgs.llvm_19 "llvm-symbolizer"}";
           };
       });
   };

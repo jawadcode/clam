@@ -1,9 +1,11 @@
 #ifndef CLAM_MAYBE_H
 #define CLAM_MAYBE_H
 
+#include <stdint.h>
+
 #include "common.h"
 
-typedef enum MaybeTag {
+typedef enum MaybeTag : uint8_t {
     MAYBE_SOME,
     MAYBE_NONE,
 } MaybeTag;

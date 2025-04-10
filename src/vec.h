@@ -1,7 +1,9 @@
 #ifndef CLAM_VEC_H
 #define CLAM_VEC_H
 
-#include "memory.h" // NOLINT
+#include <stddef.h>
+
+#include "memory.h"
 
 #define CREATE_VEC(T, Name)                                                    \
     typedef struct Name {                                                      \
@@ -33,7 +35,7 @@
     size_t Name##_push(Name *vec, T value) {                                   \
         if (vec->capacity < vec->length + 1) {                                 \
             size_t old_capacity = vec->capacity;                               \
-            vec->capacity = old_capacity < 8 ? 8 : old_capacity * 2;           \
+            vec->capacity = grow_allocation(old_capacity);                     \
             vec->buffer =                                                      \
                 (T *)reallocate(vec->buffer, sizeof(T) * vec->capacity);       \
         }                                                                      \

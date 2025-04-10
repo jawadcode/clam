@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "ast.h"
+#include "hashtable.h"
 #include "parser.h"
 #include "string.h"
 
@@ -127,17 +128,29 @@ void run_file(const char *path) {
 }
 
 int main(int argc, char **argv) {
-    // Windows doesn't print the table-building characters correctly from my
-    // testing, in both Windows Terminal and Wezterm, so I have to manually set
-    // the locale to a UTF-8 one.
-    setlocale(LC_ALL, ".UTF-8");
-    if (argc > 1) {
-        const char *path = argv[1];
-        run_file(path);
-    } else {
-        puts("Clam REPL v" CLAM_VERSION_STRING "\n"
-             "Type ':help' for more information");
-        repl();
+    /* // Windows doesn't print the table-building characters correctly from my
+     */
+    /* // testing, in both Windows Terminal and Wezterm, so I have to manually
+     * set */
+    /* // the locale to a UTF-8 one. */
+    /* setlocale(LC_ALL, ".UTF-8"); */
+    /* if (argc > 1) { */
+    /*     const char *path = argv[1]; */
+    /*     run_file(path); */
+    /* } else { */
+    /*     puts("Clam REPL v" CLAM_VERSION_STRING "\n" */
+    /*          "Type ':help' for more information"); */
+    /*     repl(); */
+    /* } */
+
+    IntTable table = IntTable_new();
+    IntTable_set(&table, STR("test"), 123);
+    int test;
+    bool found = IntTable_get(&table, STR("test"), &test);
+    if (found) {
+        printf("'test': %d\n", test);
     }
+    IntTable_free(&table);
+
     return 0;
 }

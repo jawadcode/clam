@@ -5,4 +5,6 @@
 
 void *reallocate(void *pointer, size_t new_size);
 
+size_t grow_allocation(size_t old_capacity);
+
 #endif

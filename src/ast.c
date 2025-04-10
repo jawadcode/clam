@@ -84,7 +84,7 @@ static void format_ast_node(ASTVec *arena, size_t index, StringBuf *buf) {
         case LITERAL_FLOAT: {
             char num[20];
             // I hate that I have to use a printf-style function but needs must
-            snprintf(num, 20, "%f", literal->value.floate);
+            snprintf(num, 20, "%f", literal->value.real);
             StringBuf_push_string(buf,
                                   (String){.buffer = num,
                                            // 20 is the maximum length, the null

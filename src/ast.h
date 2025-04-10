@@ -16,7 +16,7 @@ DECL_VEC_HEADER(ASTIndex, AST_List)
 // A literal
 typedef struct AST_Literal {
     // The values should match up with VM_ValueTag
-    enum AST_LiteralTag {
+    enum AST_LiteralTag : uint8_t {
         LITERAL_UNIT = 0,   // "unit"
         LITERAL_BOOL = 1,   // "true", "false"
         LITERAL_INT = 2,    // e.g. "1234"
@@ -26,7 +26,7 @@ typedef struct AST_Literal {
     union AST_LiteralUnion {
         bool boolean;
         int32_t integer;
-        double floate;
+        double real;
         StringBuf string;
     } value;
 } AST_Literal;
