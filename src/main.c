@@ -127,6 +127,9 @@ void run_file(const char *path) {
     free(buffer);
 }
 
+DECL_TABLE(int, Int)
+DEF_TABLE(int, Int)
+
 int main(int argc, char **argv) {
     /* // Windows doesn't print the table-building characters correctly from my
      */
