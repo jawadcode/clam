@@ -46,8 +46,7 @@ static void skip_whitespace(Lexer *lexer) {
             skip(lexer);
             break;
         case '#':
-            skip(lexer);
-            for (char c = peek(lexer); c != '\n' && c != '\0'; c++)
+            while (peek(lexer) != '\n' || peek(lexer) != '\0')
                 skip(lexer);
             break;
         default:
