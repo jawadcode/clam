@@ -131,47 +131,46 @@ DECL_TABLE(int, Int)
 DEF_TABLE(int, Int)
 
 int main(int argc, char **argv) {
-    /* // Windows doesn't print the table-building characters correctly from my
-     */
-    /* // testing, in both Windows Terminal and Wezterm, so I have to manually
-     * set */
-    /* // the locale to a UTF-8 one. */
-    /* setlocale(LC_ALL, ".UTF-8"); */
-    /* if (argc > 1) { */
-    /*     const char *path = argv[1]; */
-    /*     run_file(path); */
-    /* } else { */
-    /*     puts("Clam REPL v" CLAM_VERSION_STRING "\n" */
-    /*          "Type ':help' for more information"); */
-    /*     repl(); */
-    /* } */
-
-    IntTable table = IntTable_new();
-    IntTable_set(&table, STR("test1"), 123);
-    IntTable_set(&table, STR("test2"), 234);
-    IntTable_set(&table, STR("test3"), 345);
-    IntTable_set(&table, STR("test4"), 456);
-    IntTable_set(&table, STR("test5"), 567);
-    IntTable_set(&table, STR("test6"), 678);
-    IntTable_set(&table, STR("test7"), 789);
-    IntTable_set(&table, STR("test8"), 890);
-    IntTable_set(&table, STR("test9"), 1234);
-    IntTable_delete(&table, STR("test4"));
-
-    int test1;
-    bool found1 = IntTable_get(&table, STR("test1"), &test1);
-    if (found1) {
-        printf("'test1': %d\n", test1);
-    }
-
-    int test4;
-    bool found4 = IntTable_get(&table, STR("test4"), &test4);
-    if (!found4) {
-        printf("Successfully deleted entry 'test4'\n");
+    // Windows doesn't print the table-building characters correctly from my
+    // testing, in both Windows Terminal and Wezterm, so I have to manually set
+    // the locale to a UTF-8 one.
+    setlocale(LC_ALL, ".UTF-8");
+    if (argc > 1) {
+        const char *path = argv[1];
+        run_file(path);
     } else {
-        printf("⚠️\n");
+        puts("Clam REPL v" CLAM_VERSION_STRING "\n"
+             "Type ':help' for more information");
+        repl();
     }
 
-    IntTable_free(&table);
-    return 0;
+    // Some hashtable testing lol
+    // IntTable table = IntTable_new();
+    // IntTable_set(&table, STR("test1"), 123);
+    // IntTable_set(&table, STR("test2"), 234);
+    // IntTable_set(&table, STR("test3"), 345);
+    // IntTable_set(&table, STR("test4"), 456);
+    // IntTable_set(&table, STR("test5"), 567);
+    // IntTable_set(&table, STR("test6"), 678);
+    // IntTable_set(&table, STR("test7"), 789);
+    // IntTable_set(&table, STR("test8"), 890);
+    // IntTable_set(&table, STR("test9"), 1234);
+    // IntTable_delete(&table, STR("test4"));
+
+    // int test1;
+    // bool found1 = IntTable_get(&table, STR("test1"), &test1);
+    // if (found1) {
+    //     printf("'test1': %d\n", test1);
+    // }
+
+    // int test4;
+    // bool found4 = IntTable_get(&table, STR("test4"), &test4);
+    // if (!found4) {
+    //     printf("Successfully deleted entry 'test4'\n");
+    // } else {
+    //     printf("⚠️\n");
+    // }
+
+    // IntTable_free(&table);
+    // return 0;
 }
