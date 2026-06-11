@@ -1,0 +1,12 @@
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 100
+AllowShortBlocksOnASingleLine: Always
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
+AllowShortLoopsOnASingleLine: true
+# Requires clang-format v23
+# AllowShortRecordOnASingleLine: Always
+AlwaysBreakBeforeMultilineStrings: true
+BreakAfterAttributes: Never
+Cpp11BracedListStyle: Block

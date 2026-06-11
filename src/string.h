@@ -14,8 +14,7 @@ typedef struct {
 } String;
 
 // ONLY WORKS FOR STRING LITERALS
-#define STR(x)                                                                 \
-    (String) { .buffer = (x), .length = sizeof(x) - 1 }
+#define STR(x) (String){.buffer = (x), .length = sizeof(x) - 1}
 
 void String_print(String string);
 

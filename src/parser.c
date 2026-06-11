@@ -154,9 +154,8 @@ static ASTResult parse_literal(Parser *self) {
                           .value = {.integer = parse_int(self, current.span)}};
         break;
     case TK_FLOAT:
-        lit =
-            (AST_Literal){.tag = LITERAL_FLOAT,
-                          .value = {.real = parse_float(self, current.span)}};
+        lit = (AST_Literal){.tag = LITERAL_FLOAT,
+                            .value = {.real = parse_float(self, current.span)}};
         break;
     case TK_STRING: {
         StringBuf string;
