@@ -12,11 +12,11 @@ DECL_VEC_HEADER(uint16_t, Code)
 
 typedef struct Chunk {
     Values constants;
-    Code code;
+    Code   code;
 } Chunk;
 
 typedef struct NameError {
-    Span location;
+    Span      location;
     ValueType got;
     ValueType expected;
 } NameError;

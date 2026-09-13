@@ -10,11 +10,11 @@
 // null-terminated and its length in bytes
 typedef struct {
     const char *buffer;
-    size_t length;
+    size_t      length;
 } String;
 
 // ONLY WORKS FOR STRING LITERALS
-#define STR(x) (String){.buffer = (x), .length = sizeof(x) - 1}
+#define STR(x) (String){ .buffer = (x), .length = sizeof(x) - 1 }
 
 void String_print(String string);
 
@@ -26,7 +26,7 @@ DECL_VEC_HEADER(char, StringBuf)
 
 VEC_WITH_CAP_SIG(char, StringBuf)
 
-#define BUF_TO_STR(x)                                                          \
+#define BUF_TO_STR(x) \
     (String) { .buffer = (x).buffer, .length = (x).length }
 
 void StringBuf_push_string(StringBuf *dest_buf, String src_str);

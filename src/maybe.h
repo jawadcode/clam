@@ -10,20 +10,18 @@ typedef enum MaybeTag : uint8_t {
     MAYBE_NONE,
 } MaybeTag;
 
-#define CREATE_MAYBE(T, Name)                                                  \
-    typedef struct Name {                                                      \
-        MaybeTag tag;                                                          \
-        T some;                                                                \
+#define CREATE_MAYBE(T, Name) \
+    typedef struct Name {     \
+        MaybeTag tag;         \
+        T        some;        \
     } Name
 
-#define MAYBE_UNWRAP_SIG(T, Name)                                              \
-    T Name##_unwrap(Name maybe, const char *file, const int line)
+#define MAYBE_UNWRAP_SIG(T, Name) T Name##_unwrap(Name maybe, const char *file, const int line)
 
-#define MAYBE_UNWRAP_DEF(T, Name)                                              \
-    T Name##_unwrap(Name maybe, const char *file, const int line) {            \
-        ASSERT_CALLEE(maybe.tag == MAYBE_SOME, "Unwrapped an empty Maybe",     \
-                      file, line);                                             \
-        return maybe.some;                                                     \
+#define MAYBE_UNWRAP_DEF(T, Name)                                                       \
+    T Name##_unwrap(Name maybe, const char *file, const int line) {                     \
+        ASSERT_CALLEE(maybe.tag == MAYBE_SOME, "Unwrapped an empty Maybe", file, line); \
+        return maybe.some;                                                              \
     }
 
 #define UNWRAP(Name, x) Name##_unwrap(x, __FILE__, __LINE__)

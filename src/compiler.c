@@ -12,7 +12,6 @@ MaybeNameError resolve_names(ASTVec arena, ASTIndex root) {
     case AST_PRINT:
     case AST_IF_ELSE:
     case AST_UNARY_OP:
-    case AST_BINARY_OP:
-        break;
+    case AST_BINARY_OP:   break;
     }
 }

@@ -24,29 +24,28 @@
 
 #ifdef DEBUG_MODE
 #define STRINGIZE_DETAIL(x) #x
-#define STRINGIZE(x) STRINGIZE_DETAIL(x)
-#define ASSERT(assertion, message)                                             \
-    do {                                                                       \
-        if (!(assertion)) {                                                    \
-            puts("\x1b[31;1mAssertion Failed\x1b[0m @\x1b[37;3m " __FILE__     \
-                 ":" STRINGIZE(__LINE__) "\x1b[0m => '" STRINGIZE(assertion) "'\n    info: \"" message "\"");               \
-            exit(1);                                                           \
-        }                                                                      \
+#define STRINGIZE(x)        STRINGIZE_DETAIL(x)
+#define ASSERT(assertion, message)                                                             \
+    do {                                                                                       \
+        if (!(assertion)) {                                                                    \
+            puts("\x1b[31;1mAssertion Failed\x1b[0m @\x1b[37;3m " __FILE__ ":" STRINGIZE(__LINE__) "\x1b[0m => '" STRINGIZE(assertion) "'\n    info: \"" message "\""); \
+            exit(1);                                                                           \
+        }                                                                                      \
     } while (0)
-#define ASSERT_CALLEE(assertion, message, file, line)                          \
-    do {                                                                       \
-        if (!(assertion)) {                                                    \
-            printf("\x1b[31;1mAssertion Failed\x1b[0m @\x1b[37;3m "            \
-                   "%s:%d\x1b[0m => '" STRINGIZE(assertion) "'\n    info: \"" message "\"", file, line); \
-            exit(1);                                                           \
-        }                                                                      \
+#define ASSERT_CALLEE(assertion, message, file, line)                                          \
+    do {                                                                                       \
+        if (!(assertion)) {                                                                    \
+            printf(                                                                            \
+                "\x1b[31;1mAssertion Failed\x1b[0m @\x1b[37;3m "                               \
+                "%s:%d\x1b[0m => '" STRINGIZE(assertion) "'\n    info: \"" message "\"", file, \
+                                              line);                                           \
+            exit(1);                                                                           \
+        }                                                                                      \
     } while (0)
 #else
-#define ASSERT(assertion, message)                                             \
-    do {                                                                       \
-        if (!(assertion)) {                                                    \
-            UNREACHABLE;                                                       \
-        }                                                                      \
+#define ASSERT(assertion, message)         \
+    do {                                   \
+        if (!(assertion)) { UNREACHABLE; } \
     } while (0)
 #endif
 

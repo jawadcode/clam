@@ -24,4 +24,5 @@ executable(
         'src/main.c',
     ],
     dependencies: m_dep,
+    install: true,
 )

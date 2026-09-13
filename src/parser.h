@@ -10,8 +10,8 @@
 typedef struct {
     const String file_name;
     const String source;
-    Lexer lexer;
-    ASTVec ast_arena;
+    Lexer        lexer;
+    ASTVec       ast_arena;
 } Parser;
 
 // Creates a new parser that operates on 'source'
@@ -28,7 +28,7 @@ typedef struct SyntaxError_UnexpectedToken {
     String expected;
     // TODO: Remove `span`, or change `got` to `TokenKind`
     Token got;
-    Span span;
+    Span  span;
 } SyntaxError_UnexpectedToken;
 
 typedef struct {
@@ -37,7 +37,7 @@ typedef struct {
         ERROR_UNEXPECTED_TOKEN,
     } tag;
     union SyntaxErrorUnion {
-        SyntaxError_InvalidEscSeq invalid_esc_seq;
+        SyntaxError_InvalidEscSeq   invalid_esc_seq;
         SyntaxError_UnexpectedToken unexpected_token;
     } error;
 } SyntaxError;

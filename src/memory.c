@@ -17,6 +17,4 @@ void *reallocate(void *pointer, size_t new_size) {
 }
 
 // Hopefully this will be inlined
-size_t grow_allocation(size_t old_capacity) {
-    return old_capacity < 8 ? 8 : old_capacity * 2;
-}
+size_t grow_allocation(size_t old_capacity) { return old_capacity < 8 ? 8 : old_capacity * 2; }

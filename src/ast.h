@@ -17,24 +17,24 @@ DECL_VEC_HEADER(ASTIndex, AST_List)
 typedef struct AST_Literal {
     // The values should match up with VM_ValueTag
     enum AST_LiteralTag : uint8_t {
-        LITERAL_UNIT = 0,   // "unit"
-        LITERAL_BOOL = 1,   // "true", "false"
-        LITERAL_INT = 2,    // e.g. "1234"
-        LITERAL_FLOAT = 3,  // e.g. "12.34"
+        LITERAL_UNIT   = 0, // "unit"
+        LITERAL_BOOL   = 1, // "true", "false"
+        LITERAL_INT    = 2, // e.g. "1234"
+        LITERAL_FLOAT  = 3, // e.g. "12.34"
         LITERAL_STRING = 4, // e.g. ""this is a string""
     } tag;
     union AST_LiteralUnion {
-        bool boolean;
-        int32_t integer;
-        double real;
+        bool      boolean;
+        int32_t   integer;
+        double    real;
         StringBuf string;
     } value;
 } AST_Literal;
 
 // A singular let binding (variable definition) in 'AST_LetIn'
 typedef struct AST_LetBind {
-    Span span;
-    String ident;
+    Span     span;
+    String   ident;
     ASTIndex value;
 } AST_LetBind;
 
@@ -50,7 +50,7 @@ typedef struct AST_LetIn {
 
 // An anonymous function
 typedef struct AST_Abstraction {
-    String argument;
+    String   argument;
     ASTIndex body;
 } AST_Abstraction;
 
@@ -76,13 +76,13 @@ typedef struct AST_IfElse {
 // enumeration in 'VM_Op' so we can safely cast to it (doesn't match with
 // 'TokenKind' because 'TK_SUB' is used by 'BINOP_SUB')
 typedef enum AST_UnOp {
-    UNOP_NOT = 31,
+    UNOP_NOT    = 31,
     UNOP_NEGATE = 42,
 } AST_UnOp;
 
 // A unary operation `op` on the node referenced by `operand`
 typedef struct AST_UnaryOp {
-    Span op_span;
+    Span     op_span;
     AST_UnOp op;
     ASTIndex operand;
 } AST_UnaryOp;
@@ -101,22 +101,22 @@ typedef enum AST_BinOp {
     BINOP_MOD = 30,
 
     BINOP_AND = 32,
-    BINOP_OR = 33,
+    BINOP_OR  = 33,
 
-    BINOP_LT = 34,
+    BINOP_LT  = 34,
     BINOP_LEQ = 35,
-    BINOP_GT = 36,
+    BINOP_GT  = 36,
     BINOP_GEQ = 37,
-    BINOP_EQ = 38,
+    BINOP_EQ  = 38,
     BINOP_NEQ = 39,
 } AST_BinOp;
 
 // A binary operation 'op' on the nodes referenced by 'lhs' and 'rhs'
 typedef struct AST_BinaryOp {
-    Span op_span;
+    Span      op_span;
     AST_BinOp op;
-    ASTIndex lhs;
-    ASTIndex rhs;
+    ASTIndex  lhs;
+    ASTIndex  rhs;
 } AST_BinaryOp;
 
 // The Abstract Syntax Tree
@@ -134,16 +134,16 @@ typedef struct AST {
         AST_BINARY_OP,
     } tag;
     union ASTUnion {
-        AST_Literal literal;
-        String ident;
-        AST_List list;
-        AST_LetIn let_in;
+        AST_Literal     literal;
+        String          ident;
+        AST_List        list;
+        AST_LetIn       let_in;
         AST_Abstraction abstraction;
         AST_Application application;
-        AST_Print print;
-        AST_IfElse if_else;
-        AST_UnaryOp unary_op;
-        AST_BinaryOp binary_op;
+        AST_Print       print;
+        AST_IfElse      if_else;
+        AST_UnaryOp     unary_op;
+        AST_BinaryOp    binary_op;
     } value;
     Span span;
 } AST;

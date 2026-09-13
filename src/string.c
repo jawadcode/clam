@@ -6,19 +6,15 @@
 
 #include "vec.h"
 
-void String_print(String string) {
-    fwrite(string.buffer, sizeof(char), string.length, stdout);
-}
+void String_print(String string) { fwrite(string.buffer, sizeof(char), string.length, stdout); }
 
 void String_write(String string, FILE *file) {
     fwrite(string.buffer, sizeof(char), string.length, file);
 }
 
 bool String_eq(String a, String b) {
-    if (a.length != b.length)
-        return false;
-    else
-        return memcmp(a.buffer, b.buffer, a.length) == 0;
+    if (a.length != b.length) return false;
+    else return memcmp(a.buffer, b.buffer, a.length) == 0;
 }
 
 DEF_VEC(char, StringBuf)

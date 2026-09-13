@@ -18,10 +18,11 @@ static inline bool match_rest(const String cmd, const char *rest) {
 }
 
 void print_repl_help(void) {
-    puts("Commands:\n"
-         "  :exit - Exit the REPL\n"
-         "  :help - Display this help message\n"
-         "  :quit - Quit the REPL");
+    puts(
+        "Commands:\n"
+        "  :exit - Exit the REPL\n"
+        "  :help - Display this help message\n"
+        "  :quit - Quit the REPL");
 }
 
 void run_cmd(const String cmd) {
@@ -30,20 +31,17 @@ void run_cmd(const String cmd) {
         if (match_rest(cmd, "xit")) {
             puts("Bye bye...\n");
             exit(0);
-        } else
-            goto UNKNOWN_COMMAND;
+        } else goto UNKNOWN_COMMAND;
     case 'h':
         if (match_rest(cmd, "elp")) {
             print_repl_help();
             break;
-        } else
-            goto UNKNOWN_COMMAND;
+        } else goto UNKNOWN_COMMAND;
     case 'q':
         if (match_rest(cmd, "uit")) {
             puts("Bye bye...");
             exit(0);
-        } else
-            goto UNKNOWN_COMMAND;
+        } else goto UNKNOWN_COMMAND;
     UNKNOWN_COMMAND:
     default:
         fputs("\x1b[31;1mError\x1b[0m: Unknown command '", stderr);
@@ -55,7 +53,7 @@ void run_cmd(const String cmd) {
 }
 
 void run(const String source) {
-    Parser parser = Parser_new(STR("stdin"), source);
+    Parser      parser = Parser_new(STR("stdin"), source);
     ParseResult result = Parser_parse_expr(&parser);
     switch (result.tag) {
     case RESULT_OK: {
@@ -78,13 +76,12 @@ void run(const String source) {
 
 StringBuf read_line(void) {
     StringBuf str = StringBuf_new();
-    char c = (char)fgetc(stdin);
+    char      c   = (char)fgetc(stdin);
     while (c != '\n' && c != EOF) {
         StringBuf_push(&str, c);
         c = (char)fgetc(stdin);
     }
-    if (c == EOF)
-        exit(0);
+    if (c == EOF) exit(0);
     StringBuf_push(&str, '\0');
     return str;
 }
@@ -95,10 +92,9 @@ void repl(void) {
         fflush(stdout);
         StringBuf line = read_line();
         if (line.length > 2 && line.buffer[0] == ':') {
-            run_cmd(
-                (String){.buffer = line.buffer + 1, .length = line.length - 1});
+            run_cmd((String){ .buffer = line.buffer + 1, .length = line.length - 1 });
         } else {
-            run((String){.buffer = line.buffer, .length = line.length});
+            run((String){ .buffer = line.buffer, .length = line.length });
         }
         StringBuf_free(&line);
     }
@@ -116,12 +112,12 @@ void run_file(const char *path) {
     size_t file_size = ftell(file);
     rewind(file);
 
-    char *buffer = (char *)malloc(file_size + 1);
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    char  *buffer      = (char *)malloc(file_size + 1);
+    size_t bytes_read  = fread(buffer, sizeof(char), file_size, file);
     buffer[bytes_read] = '\0';
 
     fclose(file);
-    String f = {.buffer = buffer, .length = file_size};
+    String f = { .buffer = buffer, .length = file_size };
     String_print(f);
     run(f);
     free(buffer);
@@ -139,7 +135,8 @@ int main(int argc, char **argv) {
         const char *path = argv[1];
         run_file(path);
     } else {
-        puts("Clam REPL v" CLAM_VERSION_STRING "\n"
+        puts("Clam REPL v" CLAM_VERSION_STRING
+             "\n"
              "Type ':help' for more information");
         repl();
     }
