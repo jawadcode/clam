@@ -45,17 +45,17 @@
         in
         rec {
           clam-debug = clangStdenv.mkDerivation (commonDrvOpts "clam-debug" // {
-            mesonBuildType = "debug";
-            # Without this we get a _FORTIFY_SOURCE related compiler warning from
-            # clang, so we need to disable it for debug builds, for a relevant GH
-            # issue, see: https://github.com/NixOS/nixpkgs/issues/60919
-            hardeningDisable = [ "fortify" ];
+            mesonBuildType = "debugoptimized";
+            # # Without this we get a _FORTIFY_SOURCE related compiler warning from
+            # # clang, so we need to disable it for debug builds, for a relevant GH
+            # # issue, see: https://github.com/NixOS/nixpkgs/issues/60919
+            # hardeningDisable = [ "fortify" ];
             mesonFlags = [ "-Db_sanitize=address,undefined" ];
             enableParallelBuilding = true;
           });
           clam = clangStdenv.mkDerivation (commonDrvOpts "clam" // {
             mesonBuildType = "release";
-            mesonFlags = [ "-Db_lto=true" "-Dstrip=true" ];
+            mesonFlags = [ "-Dstrip=true" ];
           });
           default = clam;
         }

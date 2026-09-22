@@ -8,12 +8,12 @@ Functional, bytecode interpreted language written in C
 
 ```bash
 # Release
-meson setup builddir/release --buildtype release -Db_lto=true
+meson setup builddir/release --buildtype release
 meson compile -C builddir/release
 
 # Debug
-# You may also use "--buildtype=debug" but this causes weird `_FORTIFY_SOURCE` warnings with clang19Stdenv.
-meson setup builddir/debug --buildtype plain -Db_sanitize=address,undefined
+# You may also use "--buildtype=debug" but for me this causes weird `_FORTIFY_SOURCE` warnings with clang19Stdenv.
+meson setup builddir/debug --buildtype debugoptimized -Db_sanitize=address,undefined
 meson compile -C builddir/debug
 ```
 
@@ -22,6 +22,12 @@ meson compile -C builddir/debug
 ```bash
 ./builddir/{debug,release}/clam
 ````
+
+#### Nix
+
+```bash
+nix run github:jawadcode/clam
+```
 
 ## Credits
 
