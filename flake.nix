@@ -20,8 +20,7 @@
       clangStdenv' = pkgs: llvmPkgs:
         if pkgs.stdenv.targetPlatform.isDarwin
         then llvmPkgs.stdenv
-        # I am ~~speed~~ slop
-        else pkgs.stdenvAdapters.useMoldLinker llvmPkgs.stdenv;
+        else pkgs.stdenvAdapters.useWildLinker llvmPkgs.stdenv;
     in
     {
       packages = eachSystem (
