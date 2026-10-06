@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "src/memory.h"
+#include "memory.h"
 #include "string.h"
 
 constexpr double TABLE_MAX_LOAD_FACTOR = 0.75;
