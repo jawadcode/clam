@@ -6,28 +6,42 @@ Functional, bytecode interpreted language written in C
 
 ### Build
 
+#### Release
+
 ```bash
-# Release
 meson setup builddir/release --buildtype release
 meson compile -C builddir/release
+```
 
-# Debug
-# You may also use "--buildtype=debug" but for me this causes weird `_FORTIFY_SOURCE` warnings with clang19Stdenv.
-meson setup builddir/debug --buildtype debugoptimized -Db_sanitize=address,undefined
+#### Debug
+
+##### Linux
+
+Note: The Nix derivation and devShell both have `hardeningDisable = [ "fortify" ];` so that debug builds don't spew a billion fortify source warnings.
+
+```bash
+meson setup builddir/debug --buildtype debug -Db_sanitize=address,undefined
+meson compile -C builddir/debug
+```
+
+#### Windows
+
+Must be done in a VSDevShell with 'C++ Clang Compiler for Windows' enabled.
+
+Note: Address Sanitiser doesn't seem to work with clang on windows yet.
+
+```ps1
+meson setup builddir/debug --buildtype debug -Db_sanitize=undefined --native-file=clang-windows.ini
 meson compile -C builddir/debug
 ```
 
 ### Run
 
-```bash
-./builddir/{debug,release}/clam
-````
+* Nix: `nix run github:jawadcode/clam`
 
-#### Nix
+* Other Linux: `./builddir/{debug,release}/clam`
 
-```bash
-nix run github:jawadcode/clam
-```
+* Windows: `.\builddir\{debug,release}\clam.exe`
 
 ## Credits
 
