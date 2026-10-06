@@ -18,11 +18,12 @@ static inline bool match_rest(const String cmd, const char *rest) {
 }
 
 void print_repl_help(void) {
-    puts(
+    fputs(
         "Commands:\n"
         "  :exit - Exit the REPL\n"
         "  :help - Display this help message\n"
-        "  :quit - Quit the REPL");
+        "  :quit - Quit the REPL\n",
+        stderr);
 }
 
 void run_cmd(const String cmd) {
@@ -45,8 +46,8 @@ void run_cmd(const String cmd) {
     UNKNOWN_COMMAND:
     default:
         fputs("\x1b[31;1mError\x1b[0m: Unknown command '", stderr);
-        String_print(cmd);
-        putchar('\'');
+        String_write(cmd, stderr);
+        fputs("'\n", stderr);
         print_repl_help();
         break;
     }
