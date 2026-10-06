@@ -44,16 +44,19 @@
           };
         in
         rec {
-          clam-debug = clangStdenv.mkDerivation (commonDrvOpts "clam-debug" // {
-            mesonBuildType = "debugoptimized";
-            # # Without this we get a _FORTIFY_SOURCE related compiler warning from
-            # # clang, so we need to disable it for debug builds, for a relevant GH
-            # # issue, see: https://github.com/NixOS/nixpkgs/issues/60919
-            # hardeningDisable = [ "fortify" ];
+          clam-debug = clangStdenv.mkDerivation (commonDrvOpts "clam-debug"
+            // {
+            # mesonBuildType = "debugoptimized";
+            # Without this we get a _FORTIFY_SOURCE related compiler warning from
+            # clang, so we need to disable it for debug builds, for a relevant GH
+            # issue, see: https://github.com/NixOS/nixpkgs/issues/60919
+            mesonBuildType = "debug";
+            hardeningDisable = [ "fortify" ];
             mesonFlags = [ "-Db_sanitize=address,undefined" ];
             enableParallelBuilding = true;
           });
-          clam = clangStdenv.mkDerivation (commonDrvOpts "clam" // {
+          clam = clangStdenv.mkDerivation (commonDrvOpts "clam"
+            // {
             mesonBuildType = "release";
             mesonFlags = [ "-Dstrip=true" ];
           });
@@ -71,6 +74,7 @@
             inputsFrom = lib.attrValues self.packages.${system};
             nativeBuildInputs = [ llvmPkgs.clang-tools ];
             packages = with pkgs; [ llvmPkgs.bintools llvmPkgs.lldb meson ninja clang-analyzer mesonlsp ];
+            hardeningDisable = [ "fortify" ];
           };
         });
     };
